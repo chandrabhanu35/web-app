@@ -121,9 +121,24 @@ app.use((req, res, next) => {
   next();
 });
 
+// Serve landing page at root
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/landing.html'));
+});
+
 // Serve admin panel
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/admin-new.html'));
+});
+
+// Serve app
+app.get('/app', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/index.html'));
+});
+
+// Serve app.html
+app.get('/app.html', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
 // Serve main app - handle client-side routing
