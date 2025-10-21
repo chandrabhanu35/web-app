@@ -1,5 +1,7 @@
 // ========== ADMIN PANEL - COMPLETE WORKING VERSION ==========
-const API_URL = 'http://localhost:5000/api';
+const API_URL = window.location.hostname === 'localhost' 
+  ? 'http://localhost:5000/api'
+  : `${window.location.origin}/api`;
 let authToken = localStorage.getItem('authToken');
 let activityChart, examChart, testsChart, performanceChart;
 
