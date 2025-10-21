@@ -2,7 +2,9 @@ import jwt from 'jsonwebtoken';
 import crypto from 'crypto';
 import pool from '../db/connection.js';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key_change_in_production';
+const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key_change_in_production_12345';
+
+console.log('Using JWT_SECRET:', JWT_SECRET.substring(0, 10) + '...');
 
 // ⚠️ SECURITY: Fail if using weak default secret
 if (JWT_SECRET === 'your_secret_key_change_in_production') {
