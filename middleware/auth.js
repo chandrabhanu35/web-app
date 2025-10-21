@@ -7,8 +7,11 @@ const JWT_SECRET = process.env.JWT_SECRET || 'your_secret_key_change_in_producti
 console.log('Using JWT_SECRET:', JWT_SECRET.substring(0, 10) + '...');
 
 // ⚠️ SECURITY: Fail if using weak default secret
-if (JWT_SECRET === 'your_secret_key_change_in_production') {
-  console.warn('⚠️ WARNING: Using default JWT_SECRET. This is unsafe for production!');
+if (JWT_SECRET === 'your_secret_key_change_in_production' && process.env.NODE_ENV === 'production') {
+  console.error('❌ FATAL: Cannot start with default JWT_SECRET in production');
+  process.exit(1);
+} else if (JWT_SECRET === 'your_secret_key_change_in_production') {
+  console.warn('⚠️ WARNING: Using default JWT_SECRET. This is unsafe!');
   console.warn('📝 Set JWT_SECRET in .env file with a strong random value (min 32 characters)');
 }
 

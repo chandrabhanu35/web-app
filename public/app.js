@@ -509,41 +509,50 @@ async function showResults() {
     const submitData = await submitResponse.json();
     
     // Check if submission was successful
-    if (submitResponse.ok && submitData.status !== 'flagged') {
-      // ✅ CRITICAL: Update user stats immediately
-      if (submitData.updatedStats) {
-        console.log('Received updated stats:', submitData.updatedStats);
-        currentUser = {
-          ...currentUser,
-          total_tests: submitData.updatedStats.total_tests || 0,
-          experience_points: submitData.updatedStats.experience_points || 0,
-          streak_count: submitData.updatedStats.streak_count || 0,
-          best_score: submitData.updatedStats.best_score || 0,
-          avg_score: submitData.updatedStats.avg_score || 0
-        };
-        console.log('Updated currentUser:', currentUser);
-        localStorage.setItem('currentUser', JSON.stringify(currentUser));
-      } else {
-        console.warn('No updatedStats received from server');
-      }
-
-      // Show XP gained notification
-      if (submitData.xpGained) {
-        showNotification(`🎉 +${submitData.xpGained} XP earned!`);
-      }
-      
-      // Show streak update
-      if (submitData.newStreak > 1) {
-        showNotification(`🔥 Streak: ${submitData.newStreak} days!`);
-      }
-    } else if (submitData.status === 'flagged') {
-      showNotification('⚠️ Your attempt pattern was flagged for review');
+    if (!submitResponse.ok) {
+      console.error('Server error response:', submitResponse.status, submitData);
+      showNotification(`❌ Error: ${submitData.error || 'Failed to submit test'}`);
+      return;
     }
 
-    console.log('Test submitted:', submitData);
+    if (submitData.status === 'flagged') {
+      showNotification('⚠️ Your attempt pattern was flagged for review');
+      // Still update stats even if flagged
+      console.log('Test flagged but recorded:', submitData);
+      return;
+    }
+
+    // ✅ CRITICAL: Update user stats immediately
+    if (submitData.updatedStats) {
+      console.log('Received updated stats:', submitData.updatedStats);
+      currentUser = {
+        ...currentUser,
+        total_tests: submitData.updatedStats.total_tests || 0,
+        experience_points: submitData.updatedStats.experience_points || 0,
+        streak_count: submitData.updatedStats.streak_count || 0,
+        best_score: submitData.updatedStats.best_score || 0,
+        avg_score: submitData.updatedStats.avg_score || 0
+      };
+      console.log('Updated currentUser:', currentUser);
+      localStorage.setItem('currentUser', JSON.stringify(currentUser));
+    } else {
+      console.warn('No updatedStats received from server');
+    }
+
+    // Show XP gained notification
+    if (submitData.xpGained) {
+      showNotification(`🎉 +${submitData.xpGained} XP earned!`);
+    }
+    
+    // Show streak update
+    if (submitData.newStreak > 1) {
+      showNotification(`🔥 Streak: ${submitData.newStreak} days!`);
+    }
+
+    console.log('Test submitted successfully:', submitData);
   } catch (error) {
-    console.error('Error saving result:', error);
-    showNotification('⚠️ Error saving result, but your test was recorded');
+    console.error('❌ Error saving result:', error);
+    showNotification('⚠️ Error saving result. Please check your connection.');
   }
 }
 

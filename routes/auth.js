@@ -85,7 +85,17 @@ router.post('/signup', async (req, res) => {
 // LOGIN
 router.post('/login', async (req, res) => {
   try {
+    // Ensure proper JSON content type
+    if (!req.is('application/json')) {
+      return res.status(415).json({ error: 'Content-Type must be application/json' });
+    }
+
     const { email, password } = req.body;
+
+    // Check for missing required fields
+    if (!email || !password) {
+      return res.status(400).json({ error: 'Email and password are required' });
+    }
 
     // ✅ FIXED: Input validation
     let validation = validateInput.email(email);
@@ -94,9 +104,12 @@ router.post('/login', async (req, res) => {
     validation = validateInput.password(password);
     if (!validation.valid) return res.status(400).json({ error: validation.error });
 
+    console.log('Attempting login for email:', email); // Debug log
+
     const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
 
     if (result.rows.length === 0) {
+      console.log('No user found for email:', email); // Debug log
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 

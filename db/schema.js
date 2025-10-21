@@ -71,9 +71,8 @@ export const initializeDatabase = async () => {
       CREATE TABLE IF NOT EXISTS leaderboard (
         id SERIAL PRIMARY KEY,
         user_id INT UNIQUE REFERENCES users(id) ON DELETE CASCADE,
-        rank INT,
-        total_score INT,
-        tests_completed INT,
+        total_score INT DEFAULT 0,
+        tests_completed INT DEFAULT 0,
         last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);

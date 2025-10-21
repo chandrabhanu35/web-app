@@ -34,16 +34,40 @@ let wss = null;
 
 // Middleware
 // ✅ FIXED: Restrict CORS to allowed origins only
-const allowedOrigins = process.env.ALLOWED_ORIGINS 
-  ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5000', 'http://localhost:3000', 'https://web-app-pi-seven-32.vercel.app', 'https://web-rl21xegox-chandrabhanu35s-projects.vercel.app'];
+// Handle parse errors globally
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('JSON Parse Error:', err.message);
+    return res.status(400).json({ error: 'Invalid JSON in request' });
+  }
+  next();
+});
+
+// Serve static files first
+app.use(express.static(path.join(__dirname, 'public')));
+
+// Then setup API middleware
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+const allowedOrigins = [
+  'http://localhost:5000',
+  'http://localhost:3000',
+  'https://web-app-kljr.onrender.com',
+  'https://web-app-pi-seven-32.vercel.app',
+  'https://web-rl21xegox-chandrabhanu35s-projects.vercel.app'
+];
 
 app.use(cors({
   origin: (origin, callback) => {
-    if (!origin || allowedOrigins.includes(origin)) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      callback(null, true); // Allow all origins in development
+      console.warn(`Origin ${origin} not allowed by CORS`);
+      callback(new Error('Origin not allowed by CORS'));
     }
   },
   credentials: true,
@@ -51,12 +75,36 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-app.use(express.json({ limit: '50mb' }));
-app.use(express.urlencoded({ limit: '50mb', extended: true }));
-app.use(express.static(path.join(__dirname, 'public')));
+// Enhanced error handling for JSON parsing
+app.use((err, req, res, next) => {
+  if (err instanceof SyntaxError && err.status === 400 && 'body' in err) {
+    console.error('JSON Parse Error:', {
+      error: err.message,
+      body: err.body,
+      path: req.path,
+      method: req.method,
+      contentType: req.get('Content-Type')
+    });
+    return res.status(400).json({ 
+      error: 'Invalid JSON payload',
+      details: process.env.NODE_ENV !== 'production' ? err.message : undefined
+    });
+  }
+  next(err);
+});
 
-// 🆕 FIXED: Update session activity on every API request
+// Update session activity on API requests
 app.use('/api/', updateSessionActivity);
+
+// Request logging middleware for debugging
+app.use('/api/', (req, res, next) => {
+  console.log(`📍 ${req.method} ${req.path}`, {
+    contentType: req.get('Content-Type'),
+    bodySize: req.get('Content-Length'),
+    timestamp: new Date().toISOString()
+  });
+  next();
+});
 
 // Routes
 app.use('/api/auth', authRoutes);
@@ -64,20 +112,46 @@ app.use('/api/quiz', quizRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
 
+// Add security headers
+app.use((req, res, next) => {
+  res.setHeader('X-Content-Type-Options', 'nosniff');
+  res.setHeader('X-Frame-Options', 'DENY');
+  res.setHeader('X-XSS-Protection', '1; mode=block');
+  next();
+});
+
 // Serve admin panel
 app.get('/admin', (req, res) => {
   res.sendFile(path.join(__dirname, 'public/admin-new.html'));
 });
 
-// Serve main app
-app.get('/', (req, res) => {
+// Serve main app - handle client-side routing
+app.get('*', (req, res) => {
+  // API routes should have been handled by now
+  if (req.url.startsWith('/api/')) {
+    return res.status(404).json({ error: 'API endpoint not found' });
+  }
+  // All other routes serve the main app
   res.sendFile(path.join(__dirname, 'public/index.html'));
 });
 
-// Error handling middleware
+// Comprehensive error handling
 app.use((err, req, res, next) => {
-  console.error(err.stack);
-  res.status(500).json({ error: err.message });
+  console.error('Error details:', {
+    message: err.message,
+    stack: err.stack,
+    path: req.path,
+    method: req.method,
+    body: req.body,
+    query: req.query
+  });
+
+  // Don't expose stack traces in production
+  const error = process.env.NODE_ENV === 'production' 
+    ? { error: 'Internal server error' }
+    : { error: err.message, stack: err.stack };
+
+  res.status(err.status || 500).json(error);
 });
 
 // Initialize database and start server
