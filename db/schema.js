@@ -75,6 +75,9 @@ export const initializeDatabase = async () => {
         tests_completed INT DEFAULT 0,
         last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
+      
+      -- Create index for faster lookups
+      CREATE INDEX IF NOT EXISTS idx_leaderboard_score ON leaderboard(total_score DESC);
     `);
 
     // Daily streak table

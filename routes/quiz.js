@@ -260,10 +260,19 @@ router.post('/submit', verifyToken, async (req, res) => {
         [xpGained, newStreak, avgScore, percentage, req.userId]
       );
 
+      if (!updateResult.rows[0]) {
+        throw new Error('Failed to update user stats - no rows returned');
+      }
+
       console.log('User stats updated:', updateResult.rows[0]);
 
       // Update leaderboard (non-blocking)
-      await updateLeaderboard(req.userId);
+      try {
+        await updateLeaderboard(req.userId);
+      } catch (lbError) {
+        console.error('Leaderboard update failed (non-blocking):', lbError.message);
+        // Don't throw - quiz already saved
+      }
       
       res.status(201).json({ 
         message: 'Test result saved', 
@@ -310,6 +319,17 @@ router.post('/submit', verifyToken, async (req, res) => {
 
 const updateLeaderboard = async (userId) => {
   try {
+    // Ensure leaderboard table exists first
+    await pool.query(`
+      CREATE TABLE IF NOT EXISTS leaderboard (
+        id SERIAL PRIMARY KEY,
+        user_id INT UNIQUE REFERENCES users(id) ON DELETE CASCADE,
+        total_score INT DEFAULT 0,
+        tests_completed INT DEFAULT 0,
+        last_updated TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      );
+    `);
+
     // First, get aggregated scores
     const result = await pool.query(
       `SELECT SUM(score) as total_score, COUNT(*) as tests_completed FROM test_results WHERE user_id = $1 AND is_suspicious = false`,

@@ -119,6 +119,13 @@ async function loadUserStats() {
       headers: { 'Authorization': `Bearer ${authToken}` }
     });
 
+    // ✅ Handle 401 - Token expired or invalid
+    if (response.status === 401) {
+      console.error('❌ Token expired or invalid - auto-logout');
+      logout(); // Force logout
+      return;
+    }
+
     if (!response.ok) {
       console.error('Stats response not OK:', response.status, response.statusText);
       throw new Error('Failed to load stats');
