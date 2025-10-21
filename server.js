@@ -44,12 +44,18 @@ app.use((err, req, res, next) => {
   next();
 });
 
-// Serve static files first
-app.use(express.static(path.join(__dirname, 'public')));
-
-// Then setup API middleware
+// Setup API middleware first
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
+
+// Serve static files - but exclude root path
+app.use((req, res, next) => {
+  if (req.path === '/') {
+    // Skip static file serving for root, let routes handle it
+    return next();
+  }
+  express.static(path.join(__dirname, 'public'))(req, res, next);
+});
 
 const allowedOrigins = [
   'http://localhost:5000',
