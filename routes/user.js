@@ -70,16 +70,24 @@ router.get('/achievements', verifyToken, async (req, res) => {
 // Get comprehensive stats
 router.get('/stats', verifyToken, async (req, res) => {
   try {
+    console.log('Getting stats for user:', req.userId);
+
     // Get user stats
     const userResult = await pool.query(
       `SELECT 
         id, name, email, 
-        total_tests, best_score, avg_score, 
-        experience_points, streak_count,
+        COALESCE(total_tests, 0) as total_tests, 
+        COALESCE(best_score, 0) as best_score, 
+        COALESCE(avg_score, 0) as avg_score, 
+        COALESCE(experience_points, 0) as experience_points, 
+        COALESCE(streak_count, 0) as streak_count,
         updated_at
        FROM users WHERE id = $1`,
       [req.userId]
-    );
+    ).catch(err => {
+      console.error('Error in user query:', err);
+      throw err;
+    });
 
     if (userResult.rows.length === 0) {
       return res.status(404).json({ error: 'User not found' });
@@ -87,19 +95,26 @@ router.get('/stats', verifyToken, async (req, res) => {
 
     const user = userResult.rows[0];
 
+    console.log('Got user data:', userResult.rows[0]);
+
     // Get exam type breakdown
     const examStatsResult = await pool.query(
       `SELECT 
         exam_type,
         COUNT(*) as attempts,
-        AVG(percentage) as avg_score,
-        MAX(percentage) as best_score,
-        MIN(percentage) as worst_score
+        COALESCE(AVG(percentage), 0) as avg_score,
+        COALESCE(MAX(percentage), 0) as best_score,
+        COALESCE(MIN(percentage), 0) as worst_score
        FROM test_results 
        WHERE user_id = $1 AND is_suspicious = false
        GROUP BY exam_type`,
       [req.userId]
-    );
+    ).catch(err => {
+      console.error('Error in exam stats query:', err);
+      return { rows: [] };  // Return empty if error
+    });
+
+    console.log('Got exam stats:', examStatsResult.rows);
 
     // Get recent tests
     const recentTestsResult = await pool.query(
@@ -110,7 +125,12 @@ router.get('/stats', verifyToken, async (req, res) => {
        ORDER BY created_at DESC 
        LIMIT 5`,
       [req.userId]
-    );
+    ).catch(err => {
+      console.error('Error in recent tests query:', err);
+      return { rows: [] };  // Return empty if error
+    });
+
+    console.log('Got recent tests:', recentTestsResult.rows);
 
     // Get category performance
     const categoryStatsResult = await pool.query(
@@ -121,7 +141,12 @@ router.get('/stats', verifyToken, async (req, res) => {
        ORDER BY created_at DESC 
        LIMIT 10`,
       [req.userId]
-    );
+    ).catch(err => {
+      console.error('Error in category stats query:', err);
+      return { rows: [] };  // Return empty if error
+    });
+
+    console.log('Got category stats:', categoryStatsResult.rows);
 
     // Calculate category averages
     const categoryPerformance = {};
@@ -183,7 +208,20 @@ router.get('/stats', verifyToken, async (req, res) => {
     });
   } catch (error) {
     console.error('Error fetching stats:', error);
-    res.status(500).json({ error: error.message });
+    // Return default stats instead of error
+    res.json({
+      stats: {
+        totalTests: 0,
+        bestScore: 0,
+        avgScore: 0,
+        experiencePoints: 0,
+        streakCount: 0,
+        level: 1
+      },
+      examStats: [],
+      recentTests: [],
+      categoryPerformance: {}
+    });
   }
 });
 
