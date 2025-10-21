@@ -1,0 +1,359 @@
+#!/bin/bash
+# 🚀 AptitudeHub - Complete Command Reference
+
+# ═════════════════════════════════════════════════════════════════
+# QUICKSTART - JUST COPY PASTE THESE
+# ═════════════════════════════════════════════════════════════════
+
+# Option 1: EASIEST (Just run this one command)
+.\start.ps1
+
+# Option 2: MANUAL (Run these 4 commands in order)
+npm run docker:up
+npm run migrate
+npm run seed:improved
+npm run dev
+
+# ═════════════════════════════════════════════════════════════════
+# DATABASE COMMANDS
+# ═════════════════════════════════════════════════════════════════
+
+# Start PostgreSQL database in Docker
+npm run docker:up
+
+# Stop PostgreSQL database
+npm run docker:down
+
+# View database logs
+npm run docker:logs
+
+# View all running containers
+docker ps
+
+# View database container
+docker ps | grep aptitude-db
+
+# ═════════════════════════════════════════════════════════════════
+# DATABASE SETUP & SEEDING
+# ═════════════════════════════════════════════════════════════════
+
+# Initialize database schema (creates tables)
+npm run migrate
+
+# Seed with BALANCED questions (25% A/B/C/D)
+npm run seed:improved
+
+# Seed with standard questions
+npm run seed
+
+# Reset database (WARNING: Deletes all data!)
+npm run reset
+
+# ═════════════════════════════════════════════════════════════════
+# APPLICATION COMMANDS
+# ═════════════════════════════════════════════════════════════════
+
+# Start in development mode (hot reload)
+npm run dev
+
+# Start in production mode
+npm start
+
+# Install dependencies
+npm install
+
+# ═════════════════════════════════════════════════════════════════
+# ADMIN SETUP
+# ═════════════════════════════════════════════════════════════════
+
+# Create default admin user (admin@example.com / admin123)
+node db/setupAdmin.js
+
+# ═════════════════════════════════════════════════════════════════
+# VERIFICATION COMMANDS
+# ═════════════════════════════════════════════════════════════════
+
+# Check if server is running
+curl http://localhost:5000/health
+
+# Check database connection
+npm run migrate
+
+# View all npm scripts available
+npm run
+
+# ═════════════════════════════════════════════════════════════════
+# ACCESS POINTS
+# ═════════════════════════════════════════════════════════════════
+
+# Student App
+http://localhost:5000
+
+# Admin Panel
+http://localhost:5000/admin
+
+# API Health Check
+http://localhost:5000/health
+
+# ═════════════════════════════════════════════════════════════════
+# LOGIN CREDENTIALS
+# ═════════════════════════════════════════════════════════════════
+
+# Admin
+Email: admin@example.com
+Password: admin123
+
+# Student - Create your own during signup
+
+# ═════════════════════════════════════════════════════════════════
+# TROUBLESHOOTING COMMANDS
+# ═════════════════════════════════════════════════════════════════
+
+# If port 5000 is in use
+taskkill /F /IM node.exe
+
+# If port 5432 (database) is in use
+Get-Process | Where-Object {$_.Id -eq (Get-NetTCPConnection -LocalPort 5432 -ErrorAction SilentlyContinue).OwningProcess}
+taskkill /PID <PID> /F
+
+# Reinstall all packages
+npm install
+
+# Clear npm cache
+npm cache clean --force
+
+# Check Node version
+node --version
+
+# Check npm version
+npm --version
+
+# ═════════════════════════════════════════════════════════════════
+# DOCKER COMMANDS (If needed)
+# ═════════════════════════════════════════════════════════════════
+
+# Start Docker daemon (Windows)
+# Open Docker Desktop application
+
+# List all Docker containers
+docker ps -a
+
+# View container logs
+docker logs aptitude-db
+
+# Stop container
+docker stop aptitude-db
+
+# Start container
+docker start aptitude-db
+
+# Remove container
+docker rm aptitude-db
+
+# ═════════════════════════════════════════════════════════════════
+# GIT COMMANDS
+# ═════════════════════════════════════════════════════════════════
+
+# Check git status
+git status
+
+# Add all changes
+git add .
+
+# Commit changes
+git commit -m "Your message here"
+
+# Push to GitHub
+git push
+
+# Pull from GitHub
+git pull
+
+# View commit history
+git log --oneline
+
+# ═════════════════════════════════════════════════════════════════
+# DEPLOYMENT COMMANDS (Render)
+# ═════════════════════════════════════════════════════════════════
+
+# Deploy by pushing to GitHub (auto-deploys on Render)
+git add .
+git commit -m "Your changes"
+git push
+
+# Manually redeploy on Render dashboard:
+# 1. Go to https://dashboard.render.com
+# 2. Select your web service
+# 3. Click "Manual Deploy" button
+
+# ═════════════════════════════════════════════════════════════════
+# DEBUGGING COMMANDS
+# ═════════════════════════════════════════════════════════════════
+
+# View server logs in real-time
+npm run dev
+
+# View database logs
+npm run docker:logs
+
+# Test database connection
+# (See if it connects and shows current time)
+npm run migrate
+
+# Check all API endpoints
+curl http://localhost:5000/api/health
+
+# ═════════════════════════════════════════════════════════════════
+# OPTIMIZATION COMMANDS
+# ═════════════════════════════════════════════════════════════════
+
+# Generate 5000 questions
+node db/improvedQuestionGenerator.js
+
+# Count questions in database
+# (Requires database to be running)
+# Use admin panel to view
+
+# ═════════════════════════════════════════════════════════════════
+# BACKUP COMMANDS
+# ═════════════════════════════════════════════════════════════════
+
+# Backup database (requires PostgreSQL tools)
+docker exec aptitude-db pg_dump -U postgres aptitude_hub > backup.sql
+
+# Restore database
+docker exec -i aptitude-db psql -U postgres aptitude_hub < backup.sql
+
+# ═════════════════════════════════════════════════════════════════
+# USEFUL ONE-LINERS
+# ═════════════════════════════════════════════════════════════════
+
+# Complete fresh start (careful - deletes local DB!)
+npm run docker:down && npm run docker:up && npm run migrate && npm run seed:improved && npm run dev
+
+# Deploy and get live URL
+git add . && git commit -m "Update" && git push
+
+# Kill all Node processes
+taskkill /F /IM node.exe
+
+# ═════════════════════════════════════════════════════════════════
+# WINDOWS POWERSHELL SPECIFIC
+# ═════════════════════════════════════════════════════════════════
+
+# Change to project directory
+cd "d:\web ui"
+
+# List all files
+Get-ChildItem
+
+# Remove file
+Remove-Item filename.ext
+
+# Create new file
+New-Item -Path . -Name "filename.txt" -ItemType "file"
+
+# Find process using port 5000
+Get-NetTCPConnection -LocalPort 5000 | Select-Object OwningProcess
+
+# Kill process by PID
+Stop-Process -Id <PID> -Force
+
+# ═════════════════════════════════════════════════════════════════
+# PERFORMANCE MONITORING
+# ═════════════════════════════════════════════════════════════════
+
+# Monitor CPU and memory usage
+Get-Process node | Format-Table Name, @{Name="CPU";Expression={$_.CPU}}, @{Name="Memory(MB)";Expression={[math]::Round($_.WorkingSet/1MB,2)}}
+
+# Check all running services
+Get-Service
+
+# ═════════════════════════════════════════════════════════════════
+# PACKAGE MANAGEMENT
+# ═════════════════════════════════════════════════════════════════
+
+# List installed packages
+npm list
+
+# Update packages
+npm update
+
+# Install specific package
+npm install package-name
+
+# Uninstall package
+npm uninstall package-name
+
+# ═════════════════════════════════════════════════════════════════
+# FILE OPERATIONS
+# ═════════════════════════════════════════════════════════════════
+
+# View file contents
+cat filename.txt
+
+# Create .env file
+New-Item -Path . -Name ".env" -ItemType "file" -Value "PORT=5000"
+
+# Search for files
+Get-ChildItem -Recurse -Filter "*.js"
+
+# ═════════════════════════════════════════════════════════════════
+# COMMON WORKFLOWS
+# ═════════════════════════════════════════════════════════════════
+
+# WORKFLOW 1: First Time Setup
+npm run docker:up
+npm run migrate
+npm run seed:improved
+npm run dev
+# Visit http://localhost:5000
+
+# WORKFLOW 2: Fresh Start (with clean database)
+npm run docker:down
+npm run docker:up
+npm run migrate
+npm run seed:improved
+npm run dev
+
+# WORKFLOW 3: Deploy to Render
+git add .
+git commit -m "Deployment ready"
+git push
+# (Wait 5 minutes for auto-deployment on Render)
+
+# WORKFLOW 4: Add More Questions
+node db/improvedQuestionGenerator.js 5000
+npm run seed
+git add .
+git commit -m "Add 5000 more questions"
+git push
+
+# WORKFLOW 5: Daily Monitoring
+npm run docker:logs
+curl http://localhost:5000/health
+# Check Render dashboard for live app
+
+# ═════════════════════════════════════════════════════════════════
+# NOTES
+# ═════════════════════════════════════════════════════════════════
+
+# - Always start database FIRST with: npm run docker:up
+# - Wait 15 seconds for database to be ready
+# - Then run: npm run migrate
+# - Then run: npm run seed:improved
+# - Then run: npm run dev
+# - Or just run: .\start.ps1 (does all above automatically!)
+
+# - On Render, deployment is automatic when you push to GitHub
+# - Database URL must be set in environment variables
+# - Check Render logs for any deployment errors
+
+# - Admin panel: http://localhost:5000/admin
+# - Default admin: admin@example.com / admin123
+# - Create student accounts in signup page
+
+# ═════════════════════════════════════════════════════════════════
+
+echo "✅ All commands ready!"
+echo "🚀 Run: .\start.ps1 to get started!"
