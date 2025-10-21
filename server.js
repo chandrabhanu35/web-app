@@ -1,5 +1,7 @@
 import express from 'express';
 import cors from 'cors';
+import http from 'http';
+import { initializeWebSocket } from './services/websocket.js';
 import dotenv from 'dotenv';
 import path from 'path';
 import { fileURLToPath } from 'url';
@@ -24,7 +26,11 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 const app = express();
+const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
+
+// Initialize WebSocket
+const wss = initializeWebSocket(server);
 
 // Middleware
 // ✅ FIXED: Restrict CORS to allowed origins only
@@ -87,8 +93,9 @@ async function startServer() {
     await autoSeedQuestions();
     console.log('✅ Questions ready');
     
-    const server = app.listen(PORT, () => {
+    server.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
+      console.log(`🔌 WebSocket server active`);
       console.log('Ready to accept requests...\n');
     });
 
