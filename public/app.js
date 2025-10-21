@@ -144,22 +144,9 @@ async function loadUserStats() {
     });
 
     document.getElementById('testsAttempted').textContent = stats.totalTests || 0;
-    document.getElementById('avgScore').textContent = (stats.avgScore || 0).toFixed(1) + '%';
-    document.getElementById('bestScore').textContent = (stats.bestScore || 0).toFixed(1) + '%';
-    document.getElementById('totalQuestions').textContent = (stats.totalTests * 50) || 0;
 
-    // Verify update
-    console.log('Stats displayed:', {
-      testsAttempted: document.getElementById('testsAttempted').textContent,
-      avgScore: document.getElementById('avgScore').textContent,
-      bestScore: document.getElementById('bestScore').textContent,
-      questions: document.getElementById('totalQuestions').textContent
-    });
-    
-    // Update streak and XP
-    document.getElementById('streakCount').textContent = stats.streakCount || 0;
-    document.getElementById('xpDisplay').textContent = stats.experiencePoints || 0;
-    document.getElementById('levelDisplay').textContent = stats.level || 1;
+    // Verify update - elements removed
+    console.log('✅ Stats loaded');
 
     // Update exam-specific stats if elements exist
     if (data.examStats && data.examStats.length > 0) {
