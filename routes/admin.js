@@ -5,6 +5,26 @@ import { validateInput } from '../middleware/validation.js';
 
 const router = express.Router();
 
+// ✅ DEBUG: Health check endpoint
+router.get('/health', async (req, res) => {
+  try {
+    const poolResult = await pool.query('SELECT NOW()');
+    const userCount = await pool.query('SELECT COUNT(*) FROM users');
+    
+    res.json({
+      status: 'ok',
+      database: 'connected',
+      timestamp: poolResult.rows[0].now,
+      totalUsers: parseInt(userCount.rows[0].count)
+    });
+  } catch (error) {
+    res.status(500).json({
+      status: 'error',
+      error: error.message
+    });
+  }
+});
+
 // ✅ FIXED: Use verifyAdmin
 // Get currently online users (MUST be before /users/:userId)
 router.get('/users/online', verifyAdmin, async (req, res) => {
@@ -56,10 +76,14 @@ router.get('/users/login-history', verifyAdmin, async (req, res) => {
 // Get all users (admin only)
 router.get('/users', verifyAdmin, async (req, res) => {
   try {
+    console.log('📋 Admin fetching all users...');
+    
     const result = await pool.query(
       `SELECT id, name, email, mobile, profile_pic, total_tests, best_score, avg_score, 
-              created_at, is_active FROM users WHERE is_active = true ORDER BY created_at DESC`
+              created_at, is_active FROM users ORDER BY created_at DESC`
     );
+
+    console.log(`✅ Found ${result.rows.length} users`);
 
     // ✅ FIXED: Filter out sensitive fields
     const safeUsers = result.rows.map(u => ({
@@ -77,6 +101,7 @@ router.get('/users', verifyAdmin, async (req, res) => {
 
     res.json({ users: safeUsers });
   } catch (error) {
+    console.error('❌ Error fetching users:', error);
     res.status(500).json({ error: error.message });
   }
 });
