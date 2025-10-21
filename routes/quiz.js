@@ -155,34 +155,91 @@ router.post('/submit', verifyToken, async (req, res) => {
           totalQuestions, 
           percentage, 
           timeTaken, 
-          categoryScores, 
+          JSON.stringify(categoryScores),
           JSON.stringify(answers),
           JSON.stringify(answerPattern),
           isSuspicious
       ]
     );
 
-    // Only update leaderboard if NOT suspicious
+    // Only update user stats if NOT suspicious
     if (!isSuspicious) {
+        // Calculate XP rewards
+        const XP_BASE = 100;
+        const XP_PER_CORRECT = 10;
+        const XP_PERFECT_BONUS = 200;
+        
+        let xpGained = XP_BASE + (score * XP_PER_CORRECT);
+        if (score === totalQuestions) {
+            xpGained += XP_PERFECT_BONUS;
+        }
+
+        // Check if streak should continue or reset
+        const today = new Date().toISOString().split('T')[0];
+        const userLastTest = await pool.query(
+            `SELECT MAX(created_at::date) as last_test_date FROM test_results 
+             WHERE user_id = $1 AND is_suspicious = false`,
+            [req.userId]
+        );
+
+        let newStreak = 1;
+        let longestStreak = 1;
+        
+        if (userLastTest.rows[0]?.last_test_date) {
+            const lastDate = new Date(userLastTest.rows[0].last_test_date);
+            const currentDate = new Date(today);
+            const daysDiff = (currentDate - lastDate) / (1000 * 60 * 60 * 24);
+            
+            if (daysDiff === 1) {
+                // Streak continues - get current streak
+                const streakResult = await pool.query(
+                    `SELECT streak_count FROM users WHERE id = $1`,
+                    [req.userId]
+                );
+                newStreak = (streakResult.rows[0]?.streak_count || 0) + 1;
+            }
+        }
+
+        // Update user stats with XP and streak
         await pool.query(
           `UPDATE users SET 
            total_tests = total_tests + 1, 
-           avg_score = (SELECT AVG(percentage) FROM test_results WHERE user_id = $1 AND is_suspicious = false),
-           best_score = CASE WHEN $2 > best_score THEN $2 ELSE best_score END
-           WHERE id = $1`,
-          [req.userId, percentage]
+           experience_points = experience_points + $1,
+           streak_count = $2,
+           avg_score = (SELECT AVG(percentage) FROM test_results WHERE user_id = $3 AND is_suspicious = false),
+           best_score = CASE WHEN $4 > best_score THEN $4 ELSE best_score END,
+           updated_at = NOW()
+           WHERE id = $3`,
+          [xpGained, newStreak, req.userId, percentage]
         );
 
         await updateLeaderboard(req.userId);
-    }
+        
+        // Get updated user stats to return
+        const updatedUser = await pool.query(
+            `SELECT id, name, experience_points, streak_count, total_tests, best_score, avg_score FROM users WHERE id = $1`,
+            [req.userId]
+        );
 
-    res.status(201).json({ 
-        message: 'Test result saved', 
-        result: result.rows[0],
-        status: isSuspicious ? 'flagged' : 'normal',
-        answerPattern: answerPattern,
-        patternRatio: patternRatio.toFixed(1)
-    });
+        res.status(201).json({ 
+            message: 'Test result saved', 
+            result: result.rows[0],
+            status: 'normal',
+            xpGained: xpGained,
+            newStreak: newStreak,
+            updatedStats: updatedUser.rows[0],
+            answerPattern: answerPattern,
+            patternRatio: patternRatio.toFixed(1)
+        });
+    } else {
+        res.status(201).json({ 
+            message: 'Test result saved but flagged as suspicious', 
+            result: result.rows[0],
+            status: 'flagged',
+            answerPattern: answerPattern,
+            patternRatio: patternRatio.toFixed(1)
+        });
+    }
   } catch (error) {
     console.error('Error submitting test:', error);
     res.status(500).json({ error: error.message });

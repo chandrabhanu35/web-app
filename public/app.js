@@ -123,14 +123,84 @@ async function loadUserStats() {
     const data = await response.json();
     const stats = data.stats || {};
 
-    document.getElementById('testsAttempted').textContent = stats.total_tests || 0;
-    document.getElementById('avgScore').textContent = (stats.avg_score || 0).toFixed(1) + '%';
-    document.getElementById('bestScore').textContent = (stats.best_score || 0).toFixed(1) + '%';
-    document.getElementById('totalQuestions').textContent = stats.total_tests * 50 || 0;
+    // Update performance metrics
+    document.getElementById('testsAttempted').textContent = stats.totalTests || 0;
+    document.getElementById('avgScore').textContent = (stats.avgScore || 0).toFixed(1) + '%';
+    document.getElementById('bestScore').textContent = (stats.bestScore || 0).toFixed(1) + '%';
+    document.getElementById('totalQuestions').textContent = (stats.totalTests * 50) || 0;
     
-    document.getElementById('streakCount').textContent = stats.streak_count || 0;
-    document.getElementById('xpDisplay').textContent = stats.experience_points || 0;
-    document.getElementById('levelDisplay').textContent = Math.floor((stats.experience_points || 0) / 1000) + 1;
+    // Update streak and XP
+    document.getElementById('streakCount').textContent = stats.streakCount || 0;
+    document.getElementById('xpDisplay').textContent = stats.experiencePoints || 0;
+    document.getElementById('levelDisplay').textContent = stats.level || 1;
+
+    // Update exam-specific stats if elements exist
+    if (data.examStats && data.examStats.length > 0) {
+      data.examStats.forEach(exam => {
+        const elemId = exam.examType + 'Info';
+        const elem = document.getElementById(elemId);
+        if (elem) {
+          elem.innerHTML = `
+            <div class="exam-stats-info">
+              <div class="stat-row">
+                <span>Attempts:</span>
+                <strong>${exam.attempts}</strong>
+              </div>
+              <div class="stat-row">
+                <span>Best Score:</span>
+                <strong>${exam.bestScore.toFixed(1)}%</strong>
+              </div>
+              <div class="stat-row">
+                <span>Avg Score:</span>
+                <strong>${exam.avgScore.toFixed(1)}%</strong>
+              </div>
+            </div>
+          `;
+        }
+      });
+    }
+
+    // Update recent tests if table exists
+    if (data.recentTests && document.getElementById('recentTests')) {
+      let recentHtml = '<div class="recent-tests-list">';
+      data.recentTests.forEach(test => {
+        const date = new Date(test.date).toLocaleDateString();
+        recentHtml += `
+          <div class="recent-test-item">
+            <div class="test-header">
+              <span class="exam-name">${test.examType.toUpperCase()}</span>
+              <span class="test-date">${date}</span>
+            </div>
+            <div class="test-score">
+              <span>${test.score}/${test.totalQuestions}</span>
+              <span class="score-percent">${test.percentage.toFixed(1)}%</span>
+            </div>
+          </div>
+        `;
+      });
+      recentHtml += '</div>';
+      document.getElementById('recentTests').innerHTML = recentHtml;
+    }
+
+    // Update category performance if it exists
+    if (data.categoryPerformance && document.getElementById('categoryPerformance')) {
+      let categoryHtml = '<div class="category-stats">';
+      Object.entries(data.categoryPerformance).forEach(([category, score]) => {
+        categoryHtml += `
+          <div class="category-item">
+            <span class="category-name">${category}</span>
+            <div class="category-progress">
+              <div class="progress-bar" style="width: ${score}%"></div>
+            </div>
+            <span class="category-score">${score.toFixed(1)}%</span>
+          </div>
+        `;
+      });
+      categoryHtml += '</div>';
+      document.getElementById('categoryPerformance').innerHTML = categoryHtml;
+    }
+
+    console.log('✅ Dashboard stats updated:', data);
   } catch (error) {
     console.error('Error loading stats:', error);
   }
@@ -399,7 +469,7 @@ async function showResults() {
 
   // Save result to database
   try {
-    await fetch(`${API_URL}/quiz/submit`, {
+    const submitResponse = await fetch(`${API_URL}/quiz/submit`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -415,15 +485,73 @@ async function showResults() {
         answers: selectedAnswers
       })
     });
+
+    const submitData = await submitResponse.json();
+    
+    // Check if submission was successful
+    if (submitResponse.ok && submitData.status !== 'flagged') {
+      // ✅ CRITICAL: Update user stats immediately
+      if (submitData.updatedStats) {
+        currentUser = {
+          ...currentUser,
+          total_tests: submitData.updatedStats.total_tests,
+          experience_points: submitData.updatedStats.experience_points,
+          streak_count: submitData.updatedStats.streak_count,
+          best_score: submitData.updatedStats.best_score,
+          avg_score: submitData.updatedStats.avg_score
+        };
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+      }
+
+      // Show XP gained notification
+      if (submitData.xpGained) {
+        showNotification(`🎉 +${submitData.xpGained} XP earned!`);
+      }
+      
+      // Show streak update
+      if (submitData.newStreak > 1) {
+        showNotification(`🔥 Streak: ${submitData.newStreak} days!`);
+      }
+    } else if (submitData.status === 'flagged') {
+      showNotification('⚠️ Your attempt pattern was flagged for review');
+    }
+
+    console.log('Test submitted:', submitData);
   } catch (error) {
     console.error('Error saving result:', error);
+    showNotification('⚠️ Error saving result, but your test was recorded');
   }
+}
+
+// Show notification popup
+function showNotification(message) {
+  const notif = document.createElement('div');
+  notif.style.cssText = `
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    background: #4CAF50;
+    color: white;
+    padding: 15px 20px;
+    border-radius: 5px;
+    z-index: 10000;
+    animation: slideIn 0.3s ease-out;
+  `;
+  notif.textContent = message;
+  document.body.appendChild(notif);
+  
+  setTimeout(() => {
+    notif.style.animation = 'slideOut 0.3s ease-out';
+    setTimeout(() => notif.remove(), 300);
+  }, 3000);
 }
 
 function backToDashboard() {
   document.getElementById('resultsScreen').classList.add('hidden');
   document.getElementById('quizScreen').classList.add('hidden');
   document.getElementById('dashboardScreen').classList.remove('hidden');
+  
+  // ✅ CRITICAL: Reload user stats from backend
   loadUserStats();
 }
 

@@ -67,24 +67,116 @@ router.get('/achievements', verifyToken, async (req, res) => {
   }
 });
 
-// Get stats
+// Get comprehensive stats
 router.get('/stats', verifyToken, async (req, res) => {
   try {
+    // Get user stats
     const userResult = await pool.query(
-      'SELECT total_tests, best_score, avg_score, experience_points, streak_count FROM users WHERE id = $1',
+      `SELECT 
+        id, name, email, 
+        total_tests, best_score, avg_score, 
+        experience_points, streak_count,
+        updated_at
+       FROM users WHERE id = $1`,
       [req.userId]
     );
 
-    const testsResult = await pool.query(
-      'SELECT exam_type, COUNT(*) as count FROM test_results WHERE user_id = $1 GROUP BY exam_type',
+    if (userResult.rows.length === 0) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+
+    const user = userResult.rows[0];
+
+    // Get exam type breakdown
+    const examStatsResult = await pool.query(
+      `SELECT 
+        exam_type,
+        COUNT(*) as attempts,
+        AVG(percentage) as avg_score,
+        MAX(percentage) as best_score,
+        MIN(percentage) as worst_score
+       FROM test_results 
+       WHERE user_id = $1 AND is_suspicious = false
+       GROUP BY exam_type`,
       [req.userId]
     );
+
+    // Get recent tests
+    const recentTestsResult = await pool.query(
+      `SELECT 
+        id, exam_type, score, total_questions, percentage, time_taken, created_at
+       FROM test_results 
+       WHERE user_id = $1 AND is_suspicious = false
+       ORDER BY created_at DESC 
+       LIMIT 5`,
+      [req.userId]
+    );
+
+    // Get category performance
+    const categoryStatsResult = await pool.query(
+      `SELECT 
+        category_scores
+       FROM test_results 
+       WHERE user_id = $1 AND is_suspicious = false
+       ORDER BY created_at DESC 
+       LIMIT 10`,
+      [req.userId]
+    );
+
+    // Calculate category averages
+    const categoryPerformance = {};
+    categoryStatsResult.rows.forEach(row => {
+      if (row.category_scores) {
+        Object.entries(row.category_scores).forEach(([category, stats]) => {
+          if (!categoryPerformance[category]) {
+            categoryPerformance[category] = { total: 0, scores: [] };
+          }
+          if (stats.total > 0) {
+            const percentage = (stats.correct / stats.total) * 100;
+            categoryPerformance[category].scores.push(percentage);
+          }
+        });
+      }
+    });
+
+    // Calculate averages
+    const categoryAverage = {};
+    Object.entries(categoryPerformance).forEach(([category, data]) => {
+      if (data.scores.length > 0) {
+        const avg = data.scores.reduce((a, b) => a + b, 0) / data.scores.length;
+        categoryAverage[category] = parseFloat(avg.toFixed(2));
+      }
+    });
 
     res.json({
-      stats: userResult.rows[0],
-      examStats: testsResult.rows
+      stats: {
+        totalTests: user.total_tests,
+        bestScore: parseFloat(user.best_score || 0),
+        avgScore: parseFloat(user.avg_score || 0),
+        experiencePoints: user.experience_points,
+        streakCount: user.streak_count,
+        level: Math.floor((user.experience_points || 0) / 1000) + 1
+      },
+      examStats: examStatsResult.rows.map(row => ({
+        examType: row.exam_type,
+        attempts: row.attempts,
+        avgScore: parseFloat(row.avg_score || 0),
+        bestScore: parseFloat(row.best_score || 0),
+        worstScore: parseFloat(row.worst_score || 0)
+      })),
+      recentTests: recentTestsResult.rows.map(row => ({
+        id: row.id,
+        examType: row.exam_type,
+        score: row.score,
+        totalQuestions: row.total_questions,
+        percentage: parseFloat(row.percentage || 0),
+        timeTaken: row.time_taken,
+        date: row.created_at
+      })),
+      categoryPerformance: categoryAverage
     });
   } catch (error) {
+    console.error('Error fetching stats:', error);
     res.status(500).json({ error: error.message });
   }
 });
