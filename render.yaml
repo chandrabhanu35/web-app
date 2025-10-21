@@ -9,3 +9,7 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: JWT_SECRET
+        value: your_secret_key_change_in_production_12345
+      - key: ALLOWED_ORIGINS
+        value: https://web-app-kljr.onrender.com
