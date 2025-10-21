@@ -4,21 +4,52 @@ import { verifyToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Get questions
+// Get questions with balanced difficulty distribution
 router.get('/questions/:examType', async (req, res) => {
-  try {
-    const { examType } = req.params;
-    const { limit = 50 } = req.query;
+    try {
+        const { examType } = req.params;
+        const { limit = 50 } = req.query;
 
-    const result = await pool.query(
-      'SELECT * FROM questions WHERE exam_type = $1 ORDER BY RANDOM() LIMIT $2',
-      [examType, limit]
-    );
+        // Calculate number of questions for each difficulty level
+        const easyCount = Math.floor(limit * 0.4); // 40% easy
+        const mediumCount = Math.floor(limit * 0.35); // 35% medium
+        const hardCount = Math.floor(limit * 0.25); // 25% hard
 
-    res.json({ questions: result.rows });
-  } catch (error) {
-    res.status(500).json({ error: error.message });
-  }
+        // Get questions for each difficulty level
+        const easyQuestions = await pool.query(
+            'SELECT * FROM questions WHERE exam_type = $1 AND difficulty = $2 ORDER BY RANDOM() LIMIT $3',
+            [examType, 'easy', easyCount]
+        );
+
+        const mediumQuestions = await pool.query(
+            'SELECT * FROM questions WHERE exam_type = $1 AND difficulty = $2 ORDER BY RANDOM() LIMIT $3',
+            [examType, 'medium', mediumCount]
+        );
+
+        const hardQuestions = await pool.query(
+            'SELECT * FROM questions WHERE exam_type = $1 AND difficulty = $2 ORDER BY RANDOM() LIMIT $3',
+            [examType, 'hard', hardCount]
+        );
+
+        // Combine and shuffle all questions
+        let questions = [
+            ...easyQuestions.rows,
+            ...mediumQuestions.rows,
+            ...hardQuestions.rows
+        ].sort(() => Math.random() - 0.5);
+
+        res.json({ 
+            questions,
+            distribution: {
+                easy: easyQuestions.rows.length,
+                medium: mediumQuestions.rows.length,
+                hard: hardQuestions.rows.length
+            }
+        });
+    } catch (error) {
+        console.error('Error fetching questions:', error);
+        res.status(500).json({ error: error.message });
+    }
 });
 
 // Submit test result
