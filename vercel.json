@@ -4,15 +4,25 @@
     {
       "src": "server.js",
       "use": "@vercel/node"
+    },
+    {
+      "src": "public/**",
+      "use": "@vercel/static"
     }
   ],
   "routes": [
     {
-      "src": "/(.*)",
+      "src": "/api/(.*)",
       "dest": "/server.js"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/public/$1"
     }
   ],
   "env": {
-    "NODE_ENV": "production"
+    "NODE_ENV": "production",
+    "PORT": "5000",
+    "ALLOWED_ORIGINS": "https://web-app-pi-seven-32.vercel.app,https://web-rl21xegox-chandrabhanu35s-projects.vercel.app"
   }
 }

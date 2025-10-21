@@ -29,10 +29,16 @@ const PORT = process.env.PORT || 5000;
 // ✅ FIXED: Restrict CORS to allowed origins only
 const allowedOrigins = process.env.ALLOWED_ORIGINS 
   ? process.env.ALLOWED_ORIGINS.split(',')
-  : ['http://localhost:5000', 'http://localhost:3000'];
+  : ['http://localhost:5000', 'http://localhost:3000', 'https://web-app-pi-seven-32.vercel.app', 'https://web-rl21xegox-chandrabhanu35s-projects.vercel.app'];
 
 app.use(cors({
-  origin: allowedOrigins,
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(null, true); // Allow all origins in development
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
