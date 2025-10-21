@@ -1,0 +1,382 @@
+@import 'variables';
+@import 'mixins';
+
+// Profile section
+.profile-section {
+  background: white;
+  padding: $spacing-xl;
+  border-radius: $radius-md;
+  box-shadow: $shadow;
+  margin-bottom: $spacing-xl;
+
+  .profile-header {
+    @include flex-between;
+    align-items: flex-start;
+    margin-bottom: $spacing-xl;
+    padding-bottom: $spacing-lg;
+    border-bottom: 2px solid $light-bg;
+
+    .profile-info {
+      @include flex-center;
+      gap: $spacing-lg;
+
+      .profile-pic {
+        width: 80px;
+        height: 80px;
+        border-radius: 50%;
+        background: $light-bg;
+        @include flex-center;
+        font-size: 2em;
+        font-weight: 600;
+      }
+
+      .profile-details {
+        h2 {
+          margin: 0 0 $spacing-sm 0;
+          color: $dark-text;
+        }
+
+        p {
+          margin: $spacing-xs 0;
+          color: $light-text;
+          font-size: 0.9em;
+        }
+      }
+    }
+
+    .edit-profile-btn {
+      @extend .btn;
+      @extend .btn-primary;
+    }
+  }
+
+  @include responsive('mobile') {
+    .profile-header {
+      flex-direction: column;
+
+      .profile-info {
+        width: 100%;
+        justify-content: center;
+
+        .profile-details {
+          text-align: center;
+        }
+      }
+
+      .edit-profile-btn {
+        width: 100%;
+      }
+    }
+  }
+}
+
+// Leaderboard
+.leaderboard {
+  background: white;
+  padding: $spacing-xl;
+  border-radius: $radius-md;
+  box-shadow: $shadow;
+
+  .leaderboard-list {
+    list-style: none;
+    padding: 0;
+
+    li {
+      @include flex-between;
+      padding: $spacing-lg;
+      border-bottom: 1px solid $border-color;
+      @include transition(background-color);
+
+      &:hover {
+        background: $light-bg;
+      }
+
+      &:last-child {
+        border-bottom: none;
+      }
+
+      .rank {
+        font-weight: 700;
+        color: $primary-color;
+        min-width: 40px;
+        text-align: center;
+      }
+
+      .user {
+        @include flex-center;
+        gap: $spacing-md;
+        flex: 1;
+
+        .avatar {
+          width: 40px;
+          height: 40px;
+          border-radius: 50%;
+          background: $light-bg;
+          @include flex-center;
+          font-weight: 600;
+          font-size: 0.9em;
+        }
+
+        .name {
+          color: $dark-text;
+          font-weight: 600;
+        }
+      }
+
+      .score {
+        font-weight: 700;
+        color: $primary-color;
+        text-align: right;
+        min-width: 60px;
+      }
+    }
+  }
+}
+
+// Achievements
+.achievements-section {
+  background: white;
+  padding: $spacing-xl;
+  border-radius: $radius-md;
+  box-shadow: $shadow;
+
+  .achievements-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+    gap: $spacing-lg;
+
+    .achievement-badge {
+      @include flex-center;
+      flex-direction: column;
+      padding: $spacing-lg;
+      border-radius: $radius-md;
+      background: $light-bg;
+      @include transition(all);
+      cursor: pointer;
+      text-align: center;
+
+      &:hover {
+        background: $primary-color;
+        color: white;
+        transform: scale(1.1);
+      }
+
+      .badge-icon {
+        font-size: 2.5em;
+        margin-bottom: $spacing-sm;
+      }
+
+      .badge-name {
+        font-size: 0.85em;
+        font-weight: 600;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      &.locked {
+        opacity: 0.5;
+        filter: grayscale(1);
+
+        &:hover {
+          background: lighten($danger-color, 30%);
+        }
+      }
+    }
+  }
+}
+
+// Notifications
+.notification {
+  background: white;
+  padding: $spacing-lg;
+  border-radius: $radius-md;
+  box-shadow: $shadow;
+  margin-bottom: $spacing-md;
+  border-left: 4px solid $primary-color;
+  @include flex-between;
+  gap: $spacing-md;
+
+  &.success {
+    border-left-color: $success-color;
+  }
+
+  &.warning {
+    border-left-color: $warning-color;
+  }
+
+  &.error {
+    border-left-color: $danger-color;
+  }
+
+  .notification-content {
+    flex: 1;
+
+    .notification-title {
+      font-weight: 600;
+      color: $dark-text;
+      margin-bottom: $spacing-xs;
+    }
+
+    .notification-message {
+      color: $medium-text;
+      font-size: 0.9em;
+      margin: 0;
+    }
+  }
+
+  .close-notification {
+    @include button-reset;
+    color: $light-text;
+    font-size: 1.2em;
+    @include transition(color);
+
+    &:hover {
+      color: $danger-color;
+    }
+  }
+}
+
+// Engagement features
+.engagement-widget {
+  background: white;
+  padding: $spacing-xl;
+  border-radius: $radius-md;
+  box-shadow: $shadow;
+  margin-bottom: $spacing-lg;
+
+  &-header {
+    @include flex-between;
+    margin-bottom: $spacing-lg;
+    padding-bottom: $spacing-lg;
+    border-bottom: 2px solid $light-bg;
+  }
+
+  &-title {
+    font-size: 1.3em;
+    font-weight: 700;
+    color: $dark-text;
+  }
+
+  &-icon {
+    font-size: 2em;
+  }
+}
+
+// Streak counter
+.streak-display {
+  text-align: center;
+  padding: $spacing-xl;
+  background: linear-gradient(135deg, #ff6b6b 0%, #ff8787 100%);
+  color: white;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-lg;
+
+  .streak-count {
+    font-size: 3em;
+    font-weight: 700;
+    margin-bottom: $spacing-sm;
+  }
+
+  .streak-label {
+    font-size: 1.1em;
+    opacity: 0.9;
+  }
+}
+
+// Experience points
+.xp-bar {
+  background: $light-bg;
+  padding: $spacing-lg;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-lg;
+
+  .xp-label {
+    @include flex-between;
+    margin-bottom: $spacing-md;
+    font-size: 0.9em;
+
+    .xp-current {
+      font-weight: 600;
+    }
+
+    .xp-level {
+      color: $light-text;
+    }
+  }
+
+  .xp-progress {
+    height: 20px;
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+
+    .xp-fill {
+      height: 100%;
+      @include gradient-bg();
+      @include transition(width);
+      min-width: 2%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-weight: 600;
+      font-size: 0.75em;
+    }
+  }
+}
+
+// Tests history
+.tests-history {
+  background: white;
+  border-radius: $radius-md;
+  box-shadow: $shadow;
+  overflow: hidden;
+
+  .test-item {
+    padding: $spacing-lg;
+    border-bottom: 1px solid $border-color;
+    @include flex-between;
+    gap: $spacing-md;
+    @include transition(background-color);
+
+    &:hover {
+      background: $light-bg;
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
+
+    .test-info {
+      flex: 1;
+
+      .test-name {
+        font-weight: 600;
+        color: $dark-text;
+        margin-bottom: $spacing-xs;
+      }
+
+      .test-date {
+        font-size: 0.85em;
+        color: $light-text;
+      }
+    }
+
+    .test-score {
+      text-align: right;
+
+      .score-value {
+        font-size: 1.3em;
+        font-weight: 700;
+        color: $primary-color;
+      }
+
+      .score-percentage {
+        font-size: 0.85em;
+        color: $medium-text;
+      }
+    }
+  }
+}

@@ -1,0 +1,239 @@
+@import 'variables';
+@import 'mixins';
+
+// Header
+.main-header {
+  background: white;
+  padding: $spacing-lg $spacing-xl;
+  border-radius: $radius-md;
+  box-shadow: $shadow;
+  margin-bottom: $spacing-xl;
+  @include flex-between;
+  flex-wrap: wrap;
+  gap: $spacing-md;
+
+  .logo {
+    font-size: 1.8em;
+    font-weight: 800;
+    @include gradient-bg();
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+
+  .user-info {
+    @include flex-center;
+    gap: $spacing-md;
+
+    .user-name {
+      font-weight: 600;
+      color: $dark-text;
+    }
+
+    .logout-btn {
+      background: $danger-color;
+      color: white;
+      border: none;
+      padding: $spacing-sm $spacing-lg;
+      border-radius: 20px;
+      cursor: pointer;
+      font-weight: 600;
+      @include transition(all);
+
+      &:hover {
+        background: darken($danger-color, 10%);
+        transform: scale(1.05);
+      }
+    }
+  }
+
+  @include responsive('tablet') {
+    flex-direction: column;
+    text-align: center;
+
+    .user-info {
+      width: 100%;
+      justify-content: center;
+    }
+  }
+}
+
+// Auth Screen
+.auth-screen {
+  background: white;
+  padding: $spacing-2xl;
+  border-radius: $radius-lg;
+  box-shadow: $shadow-lg;
+  max-width: 500px;
+  margin: 80px auto;
+
+  h1 {
+    text-align: center;
+    @include gradient-bg();
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: $spacing-md;
+    font-size: 2.5em;
+  }
+
+  > p {
+    text-align: center;
+    color: $medium-text;
+    margin-bottom: $spacing-xl;
+    font-size: 1.1em;
+  }
+
+  .switch-auth {
+    text-align: center;
+    margin-top: $spacing-lg;
+    color: $medium-text;
+
+    a {
+      color: $primary-color;
+      font-weight: 600;
+      cursor: pointer;
+      @include transition(color);
+
+      &:hover {
+        color: $secondary-color;
+      }
+    }
+  }
+
+  @include responsive('mobile') {
+    padding: $spacing-xl $spacing-lg;
+    margin: 40px auto;
+  }
+}
+
+// Dashboard
+.dashboard {
+  background: white;
+  padding: $spacing-xl;
+  border-radius: $radius-lg;
+  box-shadow: $shadow;
+
+  h2 {
+    color: $dark-text;
+    margin-bottom: $spacing-xl;
+    font-size: 2em;
+  }
+}
+
+// Exam Categories
+.exam-categories {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  gap: $spacing-xl;
+  margin-bottom: $spacing-xl;
+}
+
+.exam-card {
+  @include gradient-bg();
+  padding: $spacing-xl;
+  border-radius: $radius-md;
+  color: white;
+  cursor: pointer;
+  @include transition(all);
+  position: relative;
+  overflow: hidden;
+
+  &:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba($primary-color, 0.4);
+  }
+
+  h3 {
+    font-size: 1.5em;
+    margin-bottom: $spacing-md;
+  }
+
+  p {
+    opacity: 0.9;
+    line-height: 1.6;
+    margin-bottom: $spacing-md;
+    color: inherit;
+  }
+
+  .exam-stats {
+    margin-top: $spacing-md;
+    font-size: 0.9em;
+    opacity: 0.8;
+  }
+}
+
+// Stats Section
+.stats-section {
+  background: $light-bg;
+  padding: $spacing-xl;
+  border-radius: $radius-md;
+  margin-bottom: $spacing-xl;
+
+  h3 {
+    color: $dark-text;
+    margin-bottom: $spacing-lg;
+  }
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: $spacing-lg;
+}
+
+.stat-card {
+  background: white;
+  padding: $spacing-lg;
+  border-radius: $radius-sm;
+  text-align: center;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+  @include transition(all);
+
+  &:hover {
+    transform: translateY(-3px);
+    box-shadow: $shadow;
+  }
+
+  h4 {
+    font-size: 2em;
+    color: $primary-color;
+    margin-bottom: $spacing-sm;
+  }
+
+  p {
+    color: $medium-text;
+    font-size: 0.9em;
+    margin: 0;
+  }
+}
+
+// Footer
+.footer {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  padding: $spacing-xl;
+  border-radius: $radius-md;
+  margin-top: $spacing-xl;
+  text-align: center;
+
+  p {
+    margin-bottom: $spacing-md;
+    opacity: 0.9;
+    color: inherit;
+
+    &:last-child {
+      font-size: 0.85em;
+      opacity: 0.8;
+    }
+  }
+
+  a {
+    color: white;
+    text-decoration: underline;
+  }
+
+  @include responsive('mobile') {
+    font-size: 0.95em;
+  }
+}

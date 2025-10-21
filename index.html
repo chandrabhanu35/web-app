@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AptitudeHub - Master Your Exams</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Auth Screen -->
+        <div class="auth-screen" id="authScreen">
+            <h1>🎯 AptitudeHub</h1>
+            <p>Master IT Jobs, Banking & Government Exams</p>
+            
+            <div id="loginForm">
+                <div class="form-group">
+                    <label>Email or Mobile</label>
+                    <input type="text" id="loginEmail" placeholder="Enter your email or mobile">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password">
+                </div>
+                <button class="auth-btn" onclick="login()">Login</button>
+                <div class="switch-auth">
+                    Don't have an account? <a onclick="showSignup()">Sign Up</a>
+                </div>
+            </div>
+
+            <div id="signupForm" class="hidden">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="signupName" placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label>Mobile Number</label>
+                    <input type="tel" id="signupMobile" placeholder="Enter your mobile number">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" placeholder="Create a password">
+                </div>
+                <button class="auth-btn" onclick="signup()">Create Account</button>
+                <div class="switch-auth">
+                    Already have an account? <a onclick="showLogin()">Login</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Header (Hidden initially) -->
+        <div class="main-header hidden" id="mainHeader">
+            <div class="logo">AptitudeHub</div>
+            <div class="user-info">
+                <span class="user-name" id="userName">Student</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="dashboard hidden" id="dashboardScreen">
+            <h2>Choose Your Exam Category</h2>
+            
+            <div class="exam-categories">
+                <div class="exam-card" onclick="startExam('it')">
+                    <h3>💼 IT Jobs & Campus Placements</h3>
+                    <p>Practice for TCS, Infosys, Wipro, Cognizant, Accenture, Tech Mahindra</p>
+                    <div class="exam-stats">
+                        ⏱️ 60 minutes | 📝 50 questions | 🎯 Mixed difficulty
+                    </div>
+                </div>
+
+                <div class="exam-card" onclick="startExam('banking')">
+                    <h3>🏦 Banking Exams</h3>
+                    <p>SBI PO, IBPS PO, RRB, Clerk, Bank of Baroda, PNB</p>
+                    <div class="exam-stats">
+                        ⏱️ 60 minutes | 📝 50 questions | 🎯 All sections
+                    </div>
+                </div>
+
+                <div class="exam-card" onclick="startExam('government')">
+                    <h3>🏛️ Government Exams</h3>
+                    <p>SSC CGL, SSC CHSL, Railway, UPSC, State PSC</p>
+                    <div class="exam-stats">
+                        ⏱️ 90 minutes | 📝 75 questions | 🎯 Comprehensive
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-section" id="userStats">
+                <h3>Your Performance</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4 id="testsAttempted">0</h4>
+                        <p>Tests Attempted</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4 id="avgScore">0%</h4>
+                        <p>Average Score</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4 id="bestScore">0%</h4>
+                        <p>Best Score</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4 id="totalQuestions">0</h4>
+                        <p>Questions Solved</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div class="quiz-screen hidden" id="quizScreen">
+            <div class="quiz-header">
+                <div class="exam-title" id="examTitle">Aptitude Test</div>
+                <div class="quiz-controls">
+                    <div class="question-counter" id="questionCounter">Question 1 of 50</div>
+                    <div class="timer" id="timer">⏱️ 60:00</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="question-card">
+                <div class="question-meta" id="questionMeta"></div>
+                <div class="question-text" id="questionText"></div>
+                <div class="options" id="optionsContainer"></div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+
+            <div class="quiz-actions">
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next Question →</button>
+                <button class="btn btn-primary hidden" id="finishBtn" onclick="finishQuiz()">Finish Test</button>
+                <button class="btn btn-secondary" onclick="quitQuiz()">← Back to Dashboard</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div class="results-screen hidden" id="resultsScreen">
+            <div class="results-header">
+                <h2>🎉 Test Complete!</h2>
+                <p id="examTypeResult">IT Jobs & Campus Placements</p>
+            </div>
+
+            <div class="results-summary">
+                <div class="result-card">
+                    <h3 id="scoreDisplay">0</h3>
+                    <p>Your Score</p>
+                </div>
+                <div class="result-card">
+                    <h3 id="percentageDisplay">0%</h3>
+                    <p>Accuracy</p>
+                </div>
+                <div class="result-card">
+                    <h3 id="timeDisplay">00:00</h3>
+                    <p>Time Taken</p>
+                </div>
+                <div class="result-card">
+                    <h3 id="rankDisplay">-</h3>
+                    <p>Performance</p>
+                </div>
+            </div>
+
+            <div class="performance-section">
+                <h3>Detailed Analysis</h3>
+                <div id="performanceBreakdown"></div>
+            </div>
+
+            <div class="quiz-actions">
+                <button class="btn btn-primary" onclick="backToDashboard()">← Back to Dashboard</button>
+                <button class="btn btn-secondary" onclick="retakeExam()">Retake Test</button>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>© 2025 AptitudeHub. All Rights Reserved.</strong></p>
+            <p style="font-size: 0.9em; margin-top: 10px;">
+                <strong>Disclaimer:</strong> This platform is for educational purposes only. All questions are original content. 
+                We do not guarantee exam success. Results depend on individual preparation and effort.
+            </p>
+            <p style="font-size: 0.85em; margin-top: 10px; opacity: 0.8;">
+                Privacy Policy | Terms of Service | Contact: support@aptitudehub.com
+            </p>
+        </div>
+    </div>
+
+    <script src="questions.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

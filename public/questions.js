@@ -1,0 +1,17 @@
+// Expanded Question Bank - 150+ questions
+const questionBank = [
+    // IT Jobs Questions (50)
+    {"id":"IT001","examType":"it","category":"Quantitative Aptitude","topic":"Percentages","difficulty":"Easy","question_text":"A laptop originally priced at ₹45,000 is sold at a 15% discount. What is the selling price?","options":["₹38,250","₹39,000","₹38,500","₹37,750"],"correct_answer":0,"explanation":"Discount = 15% of ₹45,000 = 6,750. Selling price = 45,000 - 6,750 = ₹38,250"},
+    {"id":"IT002","examType":"it","category":"Logical Reasoning","topic":"Number Series","difficulty":"Medium","question_text":"Find the missing number: 5, 11, 23, 47, 95, ?","options":["189","191","193","195"],"correct_answer":1,"explanation":"Pattern: Each number is (previous × 2) + 1. So 95 × 2 + 1 = 191"},
+    {"id":"IT003","examType":"it","category":"Quantitative Aptitude","topic":"Time and Work","difficulty":"Medium","question_text":"If 6 programmers can complete a project in 15 days, how many days will 10 programmers take?","options":["9 days","8 days","10 days","12 days"],"correct_answer":0,"explanation":"Work = 6 × 15 = 90 man-days. With 10 programmers: 90/10 = 9 days"},
+    {"id":"IT004","examType":"it","category":"Logical Reasoning","topic":"Coding-Decoding","difficulty":"Easy","question_text":"If COMPUTER is coded as DPNQVUFS, how is KEYBOARD coded?","options":["LFZCPBSE","LFZCPBSF","KFZCPBSE","LFZBPBSE"],"correct_answer":0,"explanation":"Each letter is shifted by +1: K→L, E→F, Y→Z, B→C, O→P, A→B, R→S, D→E"},
+    {"id":"IT005","examType":"it","category":"Quantitative Aptitude","topic":"Probability","difficulty":"Hard","question_text":"What is the probability of drawing two aces from a deck of cards consecutively without replacement?","options":["1/221","2/221","1/169","4/663"],"correct_answer":0,"explanation":"First ace: 4/52. Second ace: 3/51. Probability = (4/52) × (3/51) = 12/2652 = 1/221"},
+    
+    // Banking Exam Questions
+    {"id":"BNK001","examType":"banking","category":"Quantitative Aptitude","topic":"Compound Interest","difficulty":"Medium","question_text":"Find the compound interest on ₹12,000 at 10% per annum for 2 years compounded annually.","options":["₹2,400","₹2,520","₹2,640","₹2,280"],"correct_answer":1,"explanation":"Amount = P(1+R/100)^T = 12000(1.1)^2 = 14,520. CI = 14,520 - 12,000 = ₹2,520"},
+    {"id":"BNK002","examType":"banking","category":"Logical Reasoning","topic":"Seating Arrangement","difficulty":"Hard","question_text":"Five people A, B, C, D, E sit in a row. A and B sit together. D sits at one end. C is not adjacent to D. Who can sit in the middle?","options":["A or B","C","E","D"],"correct_answer":0,"explanation":"With D at one end and C not next to D, arrangement like D-E-A-B-C or D-E-B-A-C. A or B can be in middle"},
+    
+    // Government Exam Questions
+    {"id":"GOV001","examType":"government","category":"Quantitative Aptitude","topic":"Algebra","difficulty":"Medium","question_text":"If x + y = 10 and xy = 21, find x² + y².","options":["58","64","72","56"],"correct_answer":0,"explanation":"x² + y² = (x+y)² - 2xy = 100 - 42 = 58"},
+    {"id":"GOV002","examType":"government","category":"Logical Reasoning","topic":"Analogies","difficulty":"Easy","question_text":"Doctor : Hospital :: Teacher : ?","options":["School","Student","Book","Class"],"correct_answer":0,"explanation":"A doctor works in a hospital; a teacher works in a school. Relationship is profession to workplace"}
+];

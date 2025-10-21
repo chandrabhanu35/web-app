@@ -1,0 +1,70 @@
+@import 'variables';
+
+// Mixins
+@mixin flex-center {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+@mixin flex-between {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+@mixin flex-column {
+  display: flex;
+  flex-direction: column;
+}
+
+@mixin gradient-bg($from: $primary-color, $to: $secondary-color) {
+  background: linear-gradient(135deg, $from 0%, $to 100%);
+}
+
+@mixin card-shadow {
+  box-shadow: $shadow;
+  border-radius: $radius-md;
+}
+
+@mixin button-reset {
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 0;
+}
+
+@mixin transition($property: all, $duration: $transition-normal) {
+  transition: $property $duration;
+}
+
+@mixin responsive($size) {
+  @if $size == 'mobile' {
+    @media (max-width: $mobile) {
+      @content;
+    }
+  } @else if $size == 'tablet' {
+    @media (max-width: $tablet) {
+      @content;
+    }
+  } @else if $size == 'desktop' {
+    @media (min-width: $desktop) {
+      @content;
+    }
+  }
+}
+
+@mixin truncate {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@mixin hover-effect {
+  transition: transform $transition-normal, box-shadow $transition-normal;
+  
+  &:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 15px 40px rgba(0, 0, 0, 0.2);
+  }
+}

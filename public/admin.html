@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - AptitudeHub</title>
+    <link rel="stylesheet" href="/css/main.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .admin-login {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 9999;
+        }
+        .admin-login.active {
+            display: flex;
+        }
+        .admin-login-box {
+            background: white;
+            padding: 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 400px;
+            width: 90%;
+        }
+        .admin-login-box h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            color: #333;
+        }
+        .admin-login-box .form-group {
+            margin-bottom: 20px;
+        }
+        .admin-login-box label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+        .admin-login-box input {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+        .admin-login-box input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+        .admin-login-box button {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            font-weight: bold;
+            cursor: pointer;
+        }
+        .admin-login-box button:hover {
+            opacity: 0.9;
+        }
+        .admin-login-box .error {
+            color: #d32f2f;
+            text-align: center;
+            margin-bottom: 15px;
+            font-size: 14px;
+        }
+        .hidden {
+            display: none !important;
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Login Modal -->
+    <div class="admin-login" id="adminLogin">
+        <div class="admin-login-box">
+            <h2>🔐 Admin Login</h2>
+            <div id="adminLoginError" class="error"></div>
+            <div class="form-group">
+                <label>Email</label>
+                <input type="email" id="adminEmail" placeholder="Enter admin email">
+            </div>
+            <div class="form-group">
+                <label>Password</label>
+                <input type="password" id="adminPassword" placeholder="Enter admin password">
+            </div>
+            <button type="button" onclick="adminLogin()">Login as Admin</button>
+        </div>
+    </div>
+
+    <div class="admin-container">
+        <!-- Sidebar -->
+        <div class="admin-sidebar">
+            <div class="sidebar-header">
+                <h3>AptitudeHub Admin</h3>
+            </div>
+            <ul class="sidebar-menu">
+                <li><a href="#" onclick="showAdminSection('dashboard')" class="active">📊 Dashboard</a></li>
+                <li><a href="#" onclick="showAdminSection('users')">👥 Users</a></li>
+                <li><a href="#" onclick="showAdminSection('login-history')">📋 Login History</a></li>
+                <li><a href="#" onclick="showAdminSection('analytics')">📈 Analytics</a></li>
+                <li><a href="#" onclick="showAdminSection('questions')">❓ Questions</a></li>
+                <li><a href="#" onclick="showAdminSection('reports')">� Reports</a></li>
+                <li><a href="#" onclick="logout()">🚪 Logout</a></li>
+            </ul>
+        </div>
+
+        <!-- Main Content -->
+        <div class="admin-main">
+            <!-- Dashboard Section -->
+            <div id="dashboardSection" class="admin-section">
+                <div class="admin-header">
+                    <h1>📊 Dashboard</h1>
+                </div>
+
+                <div class="dashboard-stats">
+                    <div class="stat-box">
+                        <div class="stat-label">Total Registered</div>
+                        <p class="stat-value" id="totalRegisteredDisplay">0</p>
+                        <div class="stat-change positive">📊 All users</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Active Users</div>
+                        <p class="stat-value" id="totalActiveDisplay">0</p>
+                        <div class="stat-change positive">✅ Active now</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Currently Online</div>
+                        <p class="stat-value" id="currentlyOnlineDisplay">0</p>
+                        <div class="stat-change positive">🟢 Last 30 min</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">New Today</div>
+                        <p class="stat-value" id="newUsersTodayDisplay">0</p>
+                        <div class="stat-change positive">📈 New signups</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Total Tests</div>
+                        <p class="stat-value" id="totalTestsDisplay">0</p>
+                        <div class="stat-change positive">✍️ All time</div>
+                    </div>
+                    <div class="stat-box">
+                        <div class="stat-label">Avg Score</div>
+                        <p class="stat-value" id="avgScoreDisplay">0%</p>
+                        <div class="stat-change positive">📈 Average</div>
+                    </div>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Activity Trends (Last 30 Days)</h3>
+                    <canvas id="activityChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Exam Distribution</h3>
+                    <canvas id="examChart"></canvas>
+                </div>
+
+                <div class="card">
+                    <h3>🟢 Currently Online Users (Last 30 minutes)</h3>
+                    <div class="online-users-container">
+                        <div id="onlineUsersList" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px;">
+                            <p style="grid-column: 1/-1; text-align: center;">Loading...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Users Section -->
+            <div id="usersSection" class="admin-section hidden">
+                <div class="admin-header">
+                    <h1>👥 Users Management</h1>
+                    <button class="btn btn-primary btn-sm" onclick="addUserModal()">+ Add User</button>
+                </div>
+
+                <div class="card">
+                    <div style="overflow-x: auto;">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>User</th>
+                                    <th>Email</th>
+                                    <th>Mobile</th>
+                                    <th>Tests</th>
+                                    <th>Best Score</th>
+                                    <th>Joined</th>
+                                    <th>Status</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <tr>
+                                    <td colspan="8" style="text-align: center; padding: 20px;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Login History Section -->
+            <div id="login-historySection" class="admin-section hidden">
+                <div class="admin-header">
+                    <h1>📋 User Login History</h1>
+                </div>
+
+                <div class="card">
+                    <div style="overflow-x: auto;">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>User Name</th>
+                                    <th>Email</th>
+                                    <th>Last Seen</th>
+                                    <th>Days Active</th>
+                                    <th>Total Tests</th>
+                                    <th>Status</th>
+                                </tr>
+                            </thead>
+                            <tbody id="loginHistoryTableBody">
+                                <tr>
+                                    <td colspan="6" style="text-align: center; padding: 20px;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Analytics Section -->
+            <div id="analyticsSection" class="admin-section hidden">
+                <div class="admin-header">
+                    <h1>📈 Analytics</h1>
+                </div>
+
+                <div class="chart-container">
+                    <h3>Tests Completed Over Time</h3>
+                    <canvas id="testsChart"></canvas>
+                </div>
+
+                <div class="chart-container">
+                    <h3>User Performance Distribution</h3>
+                    <canvas id="performanceChart"></canvas>
+                </div>
+
+                <div class="card">
+                    <h3>Category Performance</h3>
+                    <div id="categoryStats"></div>
+                </div>
+            </div>
+
+            <!-- Questions Section -->
+            <div id="questionsSection" class="admin-section hidden">
+                <div class="admin-header">
+                    <h1>❓ Questions Management</h1>
+                    <button class="btn btn-primary btn-sm" onclick="addQuestionModal()">+ Add Question</button>
+                </div>
+
+                <div class="card">
+                    <div style="overflow-x: auto;">
+                        <table class="users-table">
+                            <thead>
+                                <tr>
+                                    <th>Question</th>
+                                    <th>Category</th>
+                                    <th>Difficulty</th>
+                                    <th>Exam Type</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="questionsTableBody">
+                                <tr>
+                                    <td colspan="5" style="text-align: center; padding: 20px;">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reports Section -->
+            <div id="reportsSection" class="admin-section hidden">
+                <div class="admin-header">
+                    <h1>📋 Reports</h1>
+                </div>
+
+                <div class="card">
+                    <h3>Daily Activity Report</h3>
+                    <table class="users-table">
+                        <thead>
+                            <tr>
+                                <th>Date</th>
+                                <th>Tests Taken</th>
+                                <th>Avg Score</th>
+                                <th>Active Users</th>
+                            </tr>
+                        </thead>
+                        <tbody id="reportsTableBody">
+                            <tr>
+                                <td colspan="4" style="text-align: center; padding: 20px;">Loading...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    <div id="questionModal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Add Question</h2>
+                <button class="close-btn" onclick="closeModal('questionModal')">×</button>
+            </div>
+            <div class="modal-body">
+                <form id="questionForm">
+                    <div class="form-group">
+                        <label>Exam Type</label>
+                        <select id="examType" required>
+                            <option value="">Select exam type</option>
+                            <option value="it">IT Jobs</option>
+                            <option value="banking">Banking</option>
+                            <option value="government">Government</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Category</label>
+                        <input type="text" id="category" placeholder="e.g., Quantitative Aptitude" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Topic</label>
+                        <input type="text" id="topic" placeholder="e.g., Percentages" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Difficulty</label>
+                        <select id="difficulty" required>
+                            <option value="">Select difficulty</option>
+                            <option value="Easy">Easy</option>
+                            <option value="Medium">Medium</option>
+                            <option value="Hard">Hard</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Question</label>
+                        <textarea id="questionText" placeholder="Enter question" required></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label>Option A</label>
+                        <input type="text" id="optionA" placeholder="Option A" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Option B</label>
+                        <input type="text" id="optionB" placeholder="Option B" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Option C</label>
+                        <input type="text" id="optionC" placeholder="Option C" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Option D</label>
+                        <input type="text" id="optionD" placeholder="Option D" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Correct Answer</label>
+                        <select id="correctAnswer" required>
+                            <option value="">Select correct option</option>
+                            <option value="0">Option A</option>
+                            <option value="1">Option B</option>
+                            <option value="2">Option C</option>
+                            <option value="3">Option D</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Explanation</label>
+                        <textarea id="explanation" placeholder="Enter explanation" required></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button class="btn btn-secondary" onclick="closeModal('questionModal')">Cancel</button>
+                <button class="btn btn-primary" onclick="submitQuestion()">Add Question</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="/admin.js"></script>
+</body>
+</html>

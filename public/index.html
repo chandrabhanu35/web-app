@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AptitudeHub - Master Your Exams</title>
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Auth Screen -->
+        <div class="auth-screen" id="authScreen">
+            <h1>🎯 AptitudeHub</h1>
+            <p>Master IT Jobs, Banking & Government Exams</p>
+            
+            <div id="loginForm">
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="loginEmail" placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="loginPassword" placeholder="Enter your password">
+                </div>
+                <button class="btn btn-primary" onclick="login()">Login</button>
+                <div class="switch-auth">
+                    Don't have an account? <a onclick="showSignup()">Sign Up</a>
+                </div>
+            </div>
+
+            <div id="signupForm" class="hidden">
+                <div class="form-group">
+                    <label>Full Name</label>
+                    <input type="text" id="signupName" placeholder="Enter your full name">
+                </div>
+                <div class="form-group">
+                    <label>Email</label>
+                    <input type="email" id="signupEmail" placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label>Mobile Number</label>
+                    <input type="tel" id="signupMobile" placeholder="Enter your mobile">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="signupPassword" placeholder="Create a password (min 6 chars)">
+                </div>
+                <div class="form-group">
+                    <label>Confirm Password</label>
+                    <input type="password" id="confirmPassword" placeholder="Confirm password">
+                </div>
+                <button class="btn btn-primary" onclick="signup()">Create Account</button>
+                <div class="switch-auth">
+                    Already have an account? <a onclick="showLogin()">Login</a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Main Header -->
+        <div class="main-header hidden" id="mainHeader">
+            <div class="logo">AptitudeHub</div>
+            <div class="user-info">
+                <span class="user-name" id="userName">Student</span>
+                <button class="logout-btn" onclick="logout()">Logout</button>
+            </div>
+        </div>
+
+        <!-- Dashboard -->
+        <div class="dashboard hidden" id="dashboardScreen">
+            <h2>Welcome, <span id="welcomeName"></span>! 👋</h2>
+            
+            <!-- Engagement Widgets -->
+            <div class="grid grid-cols-3 mb-5" id="engagementWidgets">
+                <div class="engagement-widget">
+                    <div class="streak-display">
+                        <div class="streak-count" id="streakCount">0</div>
+                        <div class="streak-label">🔥 Day Streak</div>
+                    </div>
+                </div>
+                
+                <div class="engagement-widget">
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 15px;">
+                        <div style="font-size: 2.5em; font-weight: 700; margin-bottom: 10px;" id="xpDisplay">0</div>
+                        <div style="font-size: 1.1em; opacity: 0.9;">Experience Points</div>
+                    </div>
+                </div>
+                
+                <div class="engagement-widget">
+                    <div style="text-align: center; padding: 20px; background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%); color: white; border-radius: 15px;">
+                        <div style="font-size: 2.5em; font-weight: 700; margin-bottom: 10px;" id="levelDisplay">1</div>
+                        <div style="font-size: 1.1em; opacity: 0.9;">Current Level</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="exam-categories">
+                <div class="exam-card" onclick="startExam('it')">
+                    <h3>💼 IT Jobs & Campus Placements</h3>
+                    <p>Practice for TCS, Infosys, Wipro, Cognizant, Accenture, Tech Mahindra</p>
+                    <div class="exam-stats">
+                        ⏱️ 60 minutes | 📝 50 questions | 🎯 Mixed difficulty
+                    </div>
+                </div>
+
+                <div class="exam-card" onclick="startExam('banking')">
+                    <h3>🏦 Banking Exams</h3>
+                    <p>SBI PO, IBPS PO, RRB, Clerk, Bank of Baroda, PNB</p>
+                    <div class="exam-stats">
+                        ⏱️ 60 minutes | 📝 50 questions | 🎯 All sections
+                    </div>
+                </div>
+
+                <div class="exam-card" onclick="startExam('government')">
+                    <h3>🏛️ Government Exams</h3>
+                    <p>SSC CGL, SSC CHSL, Railway, UPSC, State PSC</p>
+                    <div class="exam-stats">
+                        ⏱️ 90 minutes | 📝 75 questions | 🎯 Comprehensive
+                    </div>
+                </div>
+            </div>
+
+            <div class="stats-section" id="userStats">
+                <h3>📊 Your Performance</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h4 id="testsAttempted">0</h4>
+                        <p>Tests Attempted</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4 id="avgScore">0%</h4>
+                        <p>Average Score</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4 id="bestScore">0%</h4>
+                        <p>Best Score</p>
+                    </div>
+                    <div class="stat-card">
+                        <h4 id="totalQuestions">0</h4>
+                        <p>Questions Solved</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Leaderboard Section -->
+            <div class="card mb-5">
+                <div class="card-header">
+                    <h3 class="card-title">🏆 Top Performers</h3>
+                </div>
+                <div id="leaderboard"></div>
+            </div>
+        </div>
+
+        <!-- Quiz Screen -->
+        <div class="quiz-screen hidden" id="quizScreen">
+            <div class="quiz-header">
+                <div class="exam-title" id="examTitle">Aptitude Test</div>
+                <div class="quiz-controls">
+                    <div class="question-counter" id="questionCounter">Question 1 of 50</div>
+                    <div class="timer" id="timer">⏱️ 60:00</div>
+                </div>
+            </div>
+
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill"></div>
+            </div>
+
+            <div class="question-card">
+                <div class="question-meta" id="questionMeta"></div>
+                <div class="question-text" id="questionText"></div>
+                <div class="options" id="optionsContainer"></div>
+                <div class="explanation" id="explanation"></div>
+            </div>
+
+            <div class="quiz-actions">
+                <button class="btn btn-primary" id="nextBtn" onclick="nextQuestion()">Next Question →</button>
+                <button class="btn btn-primary hidden" id="finishBtn" onclick="finishQuiz()">Finish Test</button>
+                <button class="btn btn-secondary" onclick="quitQuiz()">← Back to Dashboard</button>
+            </div>
+        </div>
+
+        <!-- Results Screen -->
+        <div class="results-screen hidden" id="resultsScreen">
+            <div class="results-header">
+                <h2>🎉 Test Complete!</h2>
+                <p id="examTypeResult">IT Jobs & Campus Placements</p>
+            </div>
+
+            <div class="results-summary">
+                <div class="result-card">
+                    <h3 id="scoreDisplay">0</h3>
+                    <p>Your Score</p>
+                </div>
+                <div class="result-card">
+                    <h3 id="percentageDisplay">0%</h3>
+                    <p>Accuracy</p>
+                </div>
+                <div class="result-card">
+                    <h3 id="timeDisplay">00:00</h3>
+                    <p>Time Taken</p>
+                </div>
+                <div class="result-card">
+                    <h3 id="rankDisplay">-</h3>
+                    <p>Performance</p>
+                </div>
+            </div>
+
+            <div class="performance-section">
+                <h3>Detailed Analysis</h3>
+                <div id="performanceBreakdown"></div>
+            </div>
+
+            <div class="quiz-actions">
+                <button class="btn btn-primary" onclick="backToDashboard()">← Back to Dashboard</button>
+                <button class="btn btn-secondary" onclick="retakeExam()">Retake Test</button>
+            </div>
+        </div>
+
+        <!-- Profile Screen -->
+        <div class="profile-section hidden" id="profileScreen">
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">👤 My Profile</h3>
+                </div>
+                <div class="profile-header">
+                    <div class="profile-info">
+                        <div class="profile-pic" id="profilePic">U</div>
+                        <div class="profile-details">
+                            <h2 id="profileName">User Name</h2>
+                            <p id="profileEmail">user@email.com</p>
+                            <p id="profileMobile">+91 98765 43210</p>
+                        </div>
+                    </div>
+                    <button class="btn btn-primary btn-sm" onclick="editProfile()">Edit Profile</button>
+                </div>
+            </div>
+
+            <div class="achievements-section">
+                <h3>🏅 Achievements</h3>
+                <div class="achievements-grid" id="achievementsGrid"></div>
+            </div>
+
+            <div class="card">
+                <div class="card-header">
+                    <h3 class="card-title">📈 Recent Tests</h3>
+                </div>
+                <div class="tests-history" id="testsHistory"></div>
+            </div>
+
+            <button class="btn btn-secondary" onclick="backToDashboard()" style="margin-top: 20px;">← Back to Dashboard</button>
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <p><strong>© 2025 AptitudeHub. All Rights Reserved.</strong></p>
+            <p style="font-size: 0.9em; margin-top: 10px;">
+                <strong>Disclaimer:</strong> This platform is for educational purposes only.
+            </p>
+        </div>
+    </div>
+
+    <script src="/questions.js"></script>
+    <script src="/app.js"></script>
+</body>
+</html>
