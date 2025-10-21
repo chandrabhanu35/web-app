@@ -276,7 +276,9 @@ async function startExam(examType) {
 
   try {
     const questionCount = examType === 'government' ? 75 : 50;
-    const response = await fetch(`${API_URL}/quiz/questions/${examType}?limit=${questionCount}`);
+    // ✅ Add timestamp to prevent caching
+    const timestamp = Date.now();
+    const response = await fetch(`${API_URL}/quiz/questions/${examType}?limit=${questionCount}&t=${timestamp}`);
     
     if (!response.ok) throw new Error('Failed to load questions');
 

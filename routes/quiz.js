@@ -57,6 +57,11 @@ function shuffleQuestionOptions(question) {
 // Get questions with balanced difficulty distribution and shuffled options
 router.get('/questions/:examType', async (req, res) => {
     try {
+        // ✅ Add cache-busting headers
+        res.set('Cache-Control', 'no-cache, no-store, must-revalidate');
+        res.set('Pragma', 'no-cache');
+        res.set('Expires', '0');
+        
         const { examType } = req.params;
         const { limit = 50 } = req.query;
 
