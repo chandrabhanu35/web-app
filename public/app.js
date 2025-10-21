@@ -114,20 +114,40 @@ async function showDashboard() {
 
 async function loadUserStats() {
   try {
+    console.log('Loading user stats with token:', authToken?.substring(0, 20) + '...');
     const response = await fetch(`${API_URL}/user/stats`, {
       headers: { 'Authorization': `Bearer ${authToken}` }
     });
 
-    if (!response.ok) throw new Error('Failed to load stats');
+    if (!response.ok) {
+      console.error('Stats response not OK:', response.status, response.statusText);
+      throw new Error('Failed to load stats');
+    }
 
     const data = await response.json();
+    console.log('Received stats data:', data);
     const stats = data.stats || {};
+    console.log('Parsed stats:', stats);
 
     // Update performance metrics
+    console.log('Updating UI with stats:', {
+      totalTests: stats.totalTests,
+      avgScore: stats.avgScore,
+      bestScore: stats.bestScore
+    });
+
     document.getElementById('testsAttempted').textContent = stats.totalTests || 0;
     document.getElementById('avgScore').textContent = (stats.avgScore || 0).toFixed(1) + '%';
     document.getElementById('bestScore').textContent = (stats.bestScore || 0).toFixed(1) + '%';
     document.getElementById('totalQuestions').textContent = (stats.totalTests * 50) || 0;
+
+    // Verify update
+    console.log('Stats displayed:', {
+      testsAttempted: document.getElementById('testsAttempted').textContent,
+      avgScore: document.getElementById('avgScore').textContent,
+      bestScore: document.getElementById('bestScore').textContent,
+      questions: document.getElementById('totalQuestions').textContent
+    });
     
     // Update streak and XP
     document.getElementById('streakCount').textContent = stats.streakCount || 0;
@@ -492,15 +512,19 @@ async function showResults() {
     if (submitResponse.ok && submitData.status !== 'flagged') {
       // ✅ CRITICAL: Update user stats immediately
       if (submitData.updatedStats) {
+        console.log('Received updated stats:', submitData.updatedStats);
         currentUser = {
           ...currentUser,
-          total_tests: submitData.updatedStats.total_tests,
-          experience_points: submitData.updatedStats.experience_points,
-          streak_count: submitData.updatedStats.streak_count,
-          best_score: submitData.updatedStats.best_score,
-          avg_score: submitData.updatedStats.avg_score
+          total_tests: submitData.updatedStats.total_tests || 0,
+          experience_points: submitData.updatedStats.experience_points || 0,
+          streak_count: submitData.updatedStats.streak_count || 0,
+          best_score: submitData.updatedStats.best_score || 0,
+          avg_score: submitData.updatedStats.avg_score || 0
         };
+        console.log('Updated currentUser:', currentUser);
         localStorage.setItem('currentUser', JSON.stringify(currentUser));
+      } else {
+        console.warn('No updatedStats received from server');
       }
 
       // Show XP gained notification

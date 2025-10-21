@@ -219,18 +219,28 @@ router.post('/submit', verifyToken, async (req, res) => {
         const avgScore = parseFloat(avgResult.rows[0]?.avg_percent) || 0;
 
         // Update user stats with XP and streak
+        console.log('Updating user stats:', {
+          userId: req.userId,
+          xpGained,
+          newStreak,
+          avgScore,
+          percentage
+        });
+
         const updateResult = await pool.query(
           `UPDATE users SET 
-           total_tests = total_tests + 1, 
-           experience_points = experience_points + $1,
+           total_tests = COALESCE(total_tests, 0) + 1,
+           experience_points = COALESCE(experience_points, 0) + $1,
            streak_count = $2,
            avg_score = $3,
-           best_score = CASE WHEN $4 > best_score THEN $4 ELSE best_score END,
+           best_score = GREATEST(COALESCE(best_score, 0), $4),
            updated_at = NOW()
            WHERE id = $5
            RETURNING id, name, experience_points, streak_count, total_tests, best_score, avg_score`,
           [xpGained, newStreak, avgScore, percentage, req.userId]
         );
+
+        console.log('Update result:', updateResult.rows[0]);
 
         console.log('User stats updated:', updateResult.rows[0]);
 

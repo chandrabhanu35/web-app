@@ -148,15 +148,21 @@ router.get('/stats', verifyToken, async (req, res) => {
       }
     });
 
+    // Ensure numeric values and convert nulls to 0
+    const statsPayload = {
+      totalTests: parseInt(user.total_tests) || 0,
+      bestScore: parseFloat(user.best_score) || 0,
+      avgScore: parseFloat(user.avg_score) || 0,
+      experiencePoints: parseInt(user.experience_points) || 0,
+      streakCount: parseInt(user.streak_count) || 0,
+      level: Math.floor(((parseInt(user.experience_points) || 0) / 1000)) + 1
+    };
+
+    console.log('User row from DB:', user);
+    console.log('Processed stats:', statsPayload);
+
     res.json({
-      stats: {
-        totalTests: user.total_tests,
-        bestScore: parseFloat(user.best_score || 0),
-        avgScore: parseFloat(user.avg_score || 0),
-        experiencePoints: user.experience_points,
-        streakCount: user.streak_count,
-        level: Math.floor((user.experience_points || 0) / 1000) + 1
-      },
+      stats: statsPayload,
       examStats: examStatsResult.rows.map(row => ({
         examType: row.exam_type,
         attempts: row.attempts,
