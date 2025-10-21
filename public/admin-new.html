@@ -753,12 +753,13 @@
                     
                     users.forEach(user => {
                         const joinDate = new Date(user.created_at).toLocaleDateString();
+                        const avgScore = parseFloat(user.avg_score) || 0;
                         html += '<tr style="border-bottom: 1px solid #f0f0f0;">';
                         html += `<td style="padding: 12px;">${user.name}</td>`;
                         html += `<td style="padding: 12px;">${user.email}</td>`;
                         html += `<td style="padding: 12px;">${user.mobile || 'N/A'}</td>`;
                         html += `<td style="padding: 12px;">${user.total_tests || 0}</td>`;
-                        html += `<td style="padding: 12px;">${(user.avg_score || 0).toFixed(1)}%</td>`;
+                        html += `<td style="padding: 12px;">${avgScore.toFixed(1)}%</td>`;
                         html += `<td style="padding: 12px;">${joinDate}</td>`;
                         html += '</tr>';
                     });
