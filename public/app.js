@@ -526,23 +526,12 @@ async function showResults() {
 // Show notification popup
 function showNotification(message) {
   const notif = document.createElement('div');
-  notif.style.cssText = `
-    position: fixed;
-    top: 20px;
-    right: 20px;
-    background: #4CAF50;
-    color: white;
-    padding: 15px 20px;
-    border-radius: 5px;
-    z-index: 10000;
-    animation: slideIn 0.3s ease-out;
-  `;
+  notif.className = 'notification';
   notif.textContent = message;
   document.body.appendChild(notif);
   
   setTimeout(() => {
-    notif.style.animation = 'slideOut 0.3s ease-out';
-    setTimeout(() => notif.remove(), 300);
+    notif.remove();
   }, 3000);
 }
 
