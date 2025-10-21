@@ -1,9 +1,9 @@
-import WebSocket from 'ws';
+import { WebSocketServer } from 'ws';
 import pool from '../db/connection.js';
 
 export function initializeWebSocket(server) {
     try {
-        const wss = new WebSocket.Server({ server, noServer: false });
+        const wss = new WebSocketServer({ server, noServer: false });
 
         wss.on('connection', async (ws, req) => {
             try {
