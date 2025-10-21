@@ -16,6 +16,7 @@ import { updateSessionActivity } from './middleware/auth.js';
 // Import database initialization
 import { initializeDatabase } from './db/schema.js';
 import setupDefaultAdmin from './db/setupAdmin.js';
+import { autoSeedQuestions } from './db/autoSeed.js';
 
 dotenv.config();
 
@@ -81,6 +82,10 @@ async function startServer() {
     
     await setupDefaultAdmin();
     console.log('✅ Admin setup complete');
+    
+    // Auto-seed questions if they don't exist
+    await autoSeedQuestions();
+    console.log('✅ Questions ready');
     
     const server = app.listen(PORT, () => {
       console.log(`🚀 Server running on http://localhost:${PORT}`);
