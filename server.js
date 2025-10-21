@@ -19,6 +19,7 @@ import { updateSessionActivity } from './middleware/auth.js';
 import { initializeDatabase } from './db/schema.js';
 import setupDefaultAdmin from './db/setupAdmin.js';
 import { autoSeedQuestions } from './db/autoSeed.js';
+import { runMigrations } from './db/migrations.js';
 
 dotenv.config();
 
@@ -159,6 +160,10 @@ async function startServer() {
   try {
     await initializeDatabase();
     console.log('✅ Database initialized');
+    
+    // Run migrations to add missing columns
+    await runMigrations();
+    console.log('✅ Migrations completed');
     
     await setupDefaultAdmin();
     console.log('✅ Admin setup complete');
