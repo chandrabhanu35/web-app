@@ -36,7 +36,7 @@ export const setupDefaultAdmin = async () => {
     // Create admin role
     await pool.query(
       'INSERT INTO admin_users (user_id, role, permissions) VALUES ($1, $2, $3)',
-      [userId, 'admin', ARRAY['all']]
+      [userId, 'admin', ['all']]
     );
 
     console.log('✅ Default admin account created');
