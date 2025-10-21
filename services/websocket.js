@@ -1,124 +1,130 @@
 import WebSocket from 'ws';
-import { verifyToken } from '../middleware/auth.js';
 import pool from '../db/connection.js';
 
 export function initializeWebSocket(server) {
-    const wss = new WebSocket.Server({ server });
+    try {
+        const wss = new WebSocket.Server({ server, noServer: false });
 
-    wss.on('connection', async (ws, req) => {
-        try {
-            // Get token from URL params
-            const url = new URL(req.url, 'ws://localhost');
-            const token = url.searchParams.get('token');
-            
-            if (!token) {
-                ws.close();
-                return;
-            }
-
-            // Verify token and get user
-            const user = await verifyToken(token);
-            if (!user) {
-                ws.close();
-                return;
-            }
-
-            ws.userId = user.id;
-
-            // Send initial stats
-            const stats = await getUserStats(user.id);
-            ws.send(JSON.stringify({
-                type: 'stats_update',
-                data: stats
-            }));
-
-            // Handle messages
-            ws.on('message', async (message) => {
-                const data = JSON.parse(message);
-                
-                if (data.type === 'request_stats_update') {
-                    const updatedStats = await getUserStats(user.id);
-                    ws.send(JSON.stringify({
-                        type: 'stats_update',
-                        data: updatedStats
-                    }));
+        wss.on('connection', async (ws, req) => {
+            try {
+                // Get token from URL params - with safety checks
+                let token = null;
+                try {
+                    if (req.url) {
+                        const urlObj = new URL(req.url, 'ws://localhost');
+                        token = urlObj.searchParams.get('token');
+                    }
+                } catch (urlError) {
+                    console.warn('URL parsing error:', urlError.message);
                 }
+                
+                if (!token) {
+                    ws.close(1000, 'No token provided');
+                    return;
+                }
+
+                ws.userId = null;
+                ws.isAlive = true;
+
+                // Send initial connection confirmation
+                ws.send(JSON.stringify({
+                    type: 'connection_established',
+                    message: 'WebSocket connected'
+                }));
+
+                // Handle incoming messages
+                ws.on('message', async (message) => {
+                    try {
+                        const data = JSON.parse(message);
+                        
+                        if (data.type === 'request_stats_update' && data.userId) {
+                            ws.userId = data.userId;
+                            const stats = await getUserStats(data.userId);
+                            ws.send(JSON.stringify({
+                                type: 'stats_update',
+                                data: stats
+                            }));
+                        }
+                    } catch (parseError) {
+                        console.error('Message parse error:', parseError.message);
+                    }
+                });
+
+                // Handle pings/heartbeat
+                ws.on('pong', () => {
+                    ws.isAlive = true;
+                });
+
+                // Clean up on close
+                ws.on('close', () => {
+                    console.log('WebSocket closed');
+                });
+
+                ws.on('error', (error) => {
+                    console.error('WebSocket connection error:', error.message);
+                });
+
+            } catch (error) {
+                console.error('WebSocket connection handler error:', error.message);
+                try {
+                    ws.close(1011, 'Internal server error');
+                } catch (closeError) {
+                    console.error('Error closing WebSocket:', closeError.message);
+                }
+            }
+        });
+
+        // Heartbeat interval to keep connections alive
+        const heartbeatInterval = setInterval(() => {
+            wss.clients.forEach((ws) => {
+                if (ws.isAlive === false) {
+                    ws.terminate();
+                    return;
+                }
+                ws.isAlive = false;
+                ws.ping();
             });
+        }, 30000); // Every 30 seconds
 
-            // Clean up on close
-            ws.on('close', () => {
-                // Handle cleanup
-            });
+        // Cleanup on server close
+        server.on('close', () => {
+            clearInterval(heartbeatInterval);
+        });
 
-        } catch (error) {
-            console.error('WebSocket error:', error);
-            ws.close();
-        }
-    });
-
-    return wss;
+        console.log('✅ WebSocket server initialized');
+        return wss;
+    } catch (error) {
+        console.error('❌ Failed to initialize WebSocket:', error.message);
+        console.error(error);
+        return null;
+    }
 }
 
 async function getUserStats(userId) {
     try {
-        // Get comprehensive user stats
+        if (!userId || !pool) {
+            return null;
+        }
+
+        // Simple query without complex CTEs
         const statsQuery = await pool.query(`
-            WITH UserData AS (
-                SELECT 
-                    u.id,
-                    u.name,
-                    u.experience_points,
-                    u.streak_count,
-                    COUNT(tr.id) as total_tests,
-                    COALESCE(AVG(tr.percentage), 0) as avg_score,
-                    COALESCE(MAX(tr.percentage), 0) as best_score,
-                    COUNT(DISTINCT tr.exam_type) as unique_exams_taken,
-                    SUM(tr.total_questions) as total_questions_solved
-                FROM users u
-                LEFT JOIN test_results tr ON u.id = tr.user_id
-                WHERE u.id = $1
-                GROUP BY u.id
-            ),
-            RecentActivity AS (
-                SELECT 
-                    exam_type,
-                    percentage,
-                    created_at
-                FROM test_results
-                WHERE user_id = $1
-                ORDER BY created_at DESC
-                LIMIT 5
-            ),
-            CategoryPerformance AS (
-                SELECT 
-                    jsonb_object_agg(
-                        category,
-                        jsonb_build_object(
-                            'correct', SUM((category_scores->category->>'correct')::int),
-                            'total', SUM((category_scores->category->>'total')::int)
-                        )
-                    ) as performance
-                FROM test_results
-                WHERE user_id = $1
-            )
             SELECT 
-                ud.*,
-                COALESCE(
-                    (SELECT array_to_json(array_agg(ra.*))
-                     FROM RecentActivity ra),
-                    '[]'
-                ) as recent_activity,
-                COALESCE(
-                    (SELECT performance 
-                     FROM CategoryPerformance),
-                    '{}'::jsonb
-                ) as category_performance
-            FROM UserData ud;
+                u.id,
+                u.name,
+                u.experience_points,
+                u.streak_count,
+                COUNT(tr.id) as total_tests,
+                COALESCE(AVG(tr.percentage), 0) as avg_score,
+                COALESCE(MAX(tr.percentage), 0) as best_score
+            FROM users u
+            LEFT JOIN test_results tr ON u.id = tr.user_id
+            WHERE u.id = $1
+            GROUP BY u.id, u.name, u.experience_points, u.streak_count
         `, [userId]);
 
-        return statsQuery.rows[0];
+        return statsQuery.rows[0] || null;
     } catch (error) {
-        console.error('Error fetching user stats:', error);
+        console.error('Error fetching user stats:', error.message);
         return null;
     }
 }

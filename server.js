@@ -29,8 +29,8 @@ const app = express();
 const server = http.createServer(app);
 const PORT = process.env.PORT || 5000;
 
-// Initialize WebSocket
-const wss = initializeWebSocket(server);
+// WebSocket will be initialized after server starts
+let wss = null;
 
 // Middleware
 // ✅ FIXED: Restrict CORS to allowed origins only
@@ -94,6 +94,9 @@ async function startServer() {
     console.log('✅ Questions ready');
     
     server.listen(PORT, () => {
+      // Initialize WebSocket after server is listening
+      wss = initializeWebSocket(server);
+      
       console.log(`🚀 Server running on http://localhost:${PORT}`);
       console.log(`🔌 WebSocket server active`);
       console.log('Ready to accept requests...\n');
@@ -107,6 +110,11 @@ async function startServer() {
     // Graceful shutdown
     process.on('SIGINT', () => {
       console.log('\nShutting down gracefully...');
+      if (wss) {
+        wss.close(() => {
+          console.log('WebSocket server closed');
+        });
+      }
       server.close(() => {
         console.log('Server closed');
         process.exit(0);
