@@ -42,17 +42,24 @@ export const updateSessionActivity = async (req, res, next) => {
 
 export const verifyToken = (req, res, next) => {
   try {
+    console.log('Auth header:', req.headers.authorization);
     const token = req.headers.authorization?.split(' ')[1];
 
     if (!token) {
+      console.log('No token provided');
       return res.status(401).json({ error: 'No token provided' });
     }
 
+    console.log('Token:', token.substring(0, 20) + '...');
+    console.log('JWT_SECRET:', JWT_SECRET.substring(0, 5) + '...');
+    
     const decoded = jwt.verify(token, JWT_SECRET);
+    console.log('Decoded token:', decoded);
     req.userId = decoded.userId;
     next();
   } catch (error) {
-    res.status(401).json({ error: 'Invalid token' });
+    console.error('Token verification failed:', error);
+    res.status(401).json({ error: `Token verification failed: ${error.message}` });
   }
 };
 
