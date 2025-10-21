@@ -143,6 +143,15 @@ router.post('/submit', verifyToken, async (req, res) => {
         console.warn(`⚠️  SUSPICIOUS PATTERN: User ${req.userId} answered ${patternRatio.toFixed(1)}% same option`, answerPattern);
     }
 
+    console.log('Submitting test:', {
+        userId: req.userId,
+        examType,
+        score,
+        totalQuestions,
+        percentage,
+        timeTaken
+    });
+
     const result = await pool.query(
       `INSERT INTO test_results 
        (user_id, exam_type, score, total_questions, percentage, time_taken, category_scores, answers, answer_pattern, is_suspicious)
@@ -161,6 +170,8 @@ router.post('/submit', verifyToken, async (req, res) => {
           isSuspicious
       ]
     );
+
+    console.log('Test result saved:', result.rows[0]);
 
     // Only update user stats if NOT suspicious
     if (!isSuspicious) {
@@ -200,26 +211,33 @@ router.post('/submit', verifyToken, async (req, res) => {
             }
         }
 
+        // Calculate average score
+        const avgResult = await pool.query(
+            `SELECT AVG(percentage) as avg_percent FROM test_results WHERE user_id = $1 AND is_suspicious = false`,
+            [req.userId]
+        );
+        const avgScore = parseFloat(avgResult.rows[0]?.avg_percent) || 0;
+
         // Update user stats with XP and streak
-        await pool.query(
+        const updateResult = await pool.query(
           `UPDATE users SET 
            total_tests = total_tests + 1, 
            experience_points = experience_points + $1,
            streak_count = $2,
-           avg_score = (SELECT AVG(percentage) FROM test_results WHERE user_id = $3 AND is_suspicious = false),
+           avg_score = $3,
            best_score = CASE WHEN $4 > best_score THEN $4 ELSE best_score END,
            updated_at = NOW()
-           WHERE id = $3`,
-          [xpGained, newStreak, req.userId, percentage]
+           WHERE id = $5
+           RETURNING id, name, experience_points, streak_count, total_tests, best_score, avg_score`,
+          [xpGained, newStreak, avgScore, percentage, req.userId]
         );
+
+        console.log('User stats updated:', updateResult.rows[0]);
 
         await updateLeaderboard(req.userId);
         
         // Get updated user stats to return
-        const updatedUser = await pool.query(
-            `SELECT id, name, experience_points, streak_count, total_tests, best_score, avg_score FROM users WHERE id = $1`,
-            [req.userId]
-        );
+        const updatedUser = updateResult;
 
         res.status(201).json({ 
             message: 'Test result saved', 

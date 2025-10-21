@@ -258,7 +258,13 @@
         </div>
     </div>
 
-    <script src="/questions.js"></script>
     <script src="/app.js"></script>
+    <script>
+        // Verify scripts loaded
+        if (typeof loadUserStats === 'undefined') {
+            console.error('ERROR: app.js did not load properly');
+            document.body.innerHTML += '<p style="color:red; font-size:20px;">⚠️ JavaScript failed to load. Please refresh the page.</p>';
+        }
+    </script>
 </body>
 </html>
