@@ -4,7 +4,57 @@ import { verifyToken } from '../middleware/auth.js';
 
 const router = express.Router();
 
-// Get questions with balanced difficulty distribution
+// Function to shuffle array
+function shuffleArray(array) {
+    const arr = [...array];
+    for (let i = arr.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+    }
+    return arr;
+}
+
+// Function to shuffle answer options and update correct_answer index
+function shuffleQuestionOptions(question) {
+    try {
+        // Parse options if they're stored as JSON string
+        let options = question.options;
+        if (typeof options === 'string') {
+            options = JSON.parse(options);
+        }
+
+        // Current correct answer index
+        let correctAnswerIndex = question.correct_answer;
+        if (typeof correctAnswerIndex === 'string') {
+            correctAnswerIndex = parseInt(correctAnswerIndex);
+        }
+
+        // Create pairs of (option, isCorrect)
+        const optionPairs = options.map((opt, idx) => ({
+            text: opt,
+            isCorrect: idx === correctAnswerIndex
+        }));
+
+        // Shuffle the pairs
+        const shuffledPairs = shuffleArray(optionPairs);
+
+        // Extract new options and find new correct answer index
+        const newOptions = shuffledPairs.map(pair => pair.text);
+        const newCorrectAnswerIndex = shuffledPairs.findIndex(pair => pair.isCorrect);
+
+        // Return shuffled question
+        return {
+            ...question,
+            options: newOptions,
+            correct_answer: newCorrectAnswerIndex
+        };
+    } catch (error) {
+        console.error('Error shuffling question options:', error);
+        return question; // Return unmodified if error occurs
+    }
+}
+
+// Get questions with balanced difficulty distribution and shuffled options
 router.get('/questions/:examType', async (req, res) => {
     try {
         const { examType } = req.params;
@@ -31,19 +81,36 @@ router.get('/questions/:examType', async (req, res) => {
             [examType, 'hard', hardCount]
         );
 
-        // Combine and shuffle all questions
+        // Combine all questions
         let questions = [
             ...easyQuestions.rows,
             ...mediumQuestions.rows,
             ...hardQuestions.rows
-        ].sort(() => Math.random() - 0.5);
+        ];
+
+        // Shuffle the question order
+        questions = shuffleArray(questions);
+
+        // CRITICAL: Shuffle answer options for EACH question
+        // This prevents gaming the system by always selecting A
+        questions = questions.map(q => shuffleQuestionOptions(q));
+
+        // Analyze answer distribution for verification
+        const answerDistribution = {
+            A: 0, B: 0, C: 0, D: 0
+        };
+        questions.forEach(q => {
+            const pos = ['A', 'B', 'C', 'D'][q.correct_answer];
+            if (pos) answerDistribution[pos]++;
+        });
 
         res.json({ 
             questions,
             distribution: {
                 easy: easyQuestions.rows.length,
                 medium: mediumQuestions.rows.length,
-                hard: hardQuestions.rows.length
+                hard: hardQuestions.rows.length,
+                answerDistribution: answerDistribution
             }
         });
     } catch (error) {
@@ -52,31 +119,72 @@ router.get('/questions/:examType', async (req, res) => {
     }
 });
 
-// Submit test result
+// Submit test result with answer pattern analysis
 router.post('/submit', verifyToken, async (req, res) => {
   try {
     const { examType, score, totalQuestions, percentage, timeTaken, categoryScores, answers } = req.body;
 
+    // Analyze answer patterns to detect gaming
+    const answerPattern = {};
+    answers.forEach(ans => {
+        const pos = ['A', 'B', 'C', 'D'][ans.selected];
+        answerPattern[pos] = (answerPattern[pos] || 0) + 1;
+    });
+
+    // Calculate pattern ratio (highest repeated answer)
+    const maxSameAnswer = Math.max(...Object.values(answerPattern));
+    const patternRatio = (maxSameAnswer / answers.length) * 100;
+
+    // Flag if >75% answers are the same option
+    const isSuspicious = patternRatio > 75;
+
+    // Log suspicious activity
+    if (isSuspicious) {
+        console.warn(`⚠️  SUSPICIOUS PATTERN: User ${req.userId} answered ${patternRatio.toFixed(1)}% same option`, answerPattern);
+    }
+
     const result = await pool.query(
-      `INSERT INTO test_results (user_id, exam_type, score, total_questions, percentage, time_taken, category_scores, answers)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING *`,
-      [req.userId, examType, score, totalQuestions, percentage, timeTaken, categoryScores, answers]
+      `INSERT INTO test_results 
+       (user_id, exam_type, score, total_questions, percentage, time_taken, category_scores, answers, answer_pattern, is_suspicious)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+       RETURNING *`,
+      [
+          req.userId, 
+          examType, 
+          score, 
+          totalQuestions, 
+          percentage, 
+          timeTaken, 
+          categoryScores, 
+          JSON.stringify(answers),
+          JSON.stringify(answerPattern),
+          isSuspicious
+      ]
     );
 
-    // Update user stats
-    await pool.query(
-      `UPDATE users SET total_tests = total_tests + 1, avg_score = 
-       (SELECT AVG(percentage) FROM test_results WHERE user_id = $1),
-       best_score = CASE WHEN $2 > best_score THEN $2 ELSE best_score END
-       WHERE id = $1`,
-      [req.userId, percentage]
-    );
+    // Only update leaderboard if NOT suspicious
+    if (!isSuspicious) {
+        await pool.query(
+          `UPDATE users SET 
+           total_tests = total_tests + 1, 
+           avg_score = (SELECT AVG(percentage) FROM test_results WHERE user_id = $1 AND is_suspicious = false),
+           best_score = CASE WHEN $2 > best_score THEN $2 ELSE best_score END
+           WHERE id = $1`,
+          [req.userId, percentage]
+        );
 
-    // Update leaderboard
-    await updateLeaderboard(req.userId);
+        await updateLeaderboard(req.userId);
+    }
 
-    res.status(201).json({ message: 'Test result saved', result: result.rows[0] });
+    res.status(201).json({ 
+        message: 'Test result saved', 
+        result: result.rows[0],
+        status: isSuspicious ? 'flagged' : 'normal',
+        answerPattern: answerPattern,
+        patternRatio: patternRatio.toFixed(1)
+    });
   } catch (error) {
+    console.error('Error submitting test:', error);
     res.status(500).json({ error: error.message });
   }
 });

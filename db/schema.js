@@ -48,6 +48,8 @@ export const initializeDatabase = async () => {
         time_taken INT,
         category_scores JSONB,
         answers JSONB,
+        answer_pattern JSONB,
+        is_suspicious BOOLEAN DEFAULT FALSE,
         created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
       );
     `);
