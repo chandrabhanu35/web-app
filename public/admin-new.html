@@ -255,6 +255,7 @@
                 <li><a href="#" class="active" onclick="showSection('dashboard')">📊 Dashboard</a></li>
                 <li><a href="#" onclick="showSection('users')">👥 Users</a></li>
                 <li><a href="#" onclick="showSection('tests')">📝 Tests</a></li>
+                <li><a href="#" onclick="showSection('reviews')">⭐ Reviews</a></li>
                 <li><a href="#" onclick="handleLogout(); return false;">🚪 Logout</a></li>
             </ul>
         </div>
@@ -329,6 +330,44 @@
                 <div class="card">
                     <h3>Recent Tests</h3>
                     <div id="testsListDisplay" class="loading">Coming soon...</div>
+                </div>
+            </div>
+
+            <!-- REVIEWS SECTION -->
+            <div id="reviewsSection" class="content-section" style="display: none;">
+                <div class="page-header">
+                    <h1>⭐ User Reviews & Feedback</h1>
+                    <p style="color: #666;">View all user feedback and reviews about your platform</p>
+                </div>
+
+                <!-- Review Stats -->
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Reviews</div>
+                        <div class="stat-value" id="totalReviews">0</div>
+                        <div class="stat-info">💬 User feedback</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Average Rating</div>
+                        <div class="stat-value" id="avgRating">0</div>
+                        <div class="stat-info">⭐ Out of 5</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Liked Paper</div>
+                        <div class="stat-value" id="likedCount">0</div>
+                        <div class="stat-info">👍 Positive feedback</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Problems Reported</div>
+                        <div class="stat-value" id="problemCount">0</div>
+                        <div class="stat-info">⚠️ Issues to fix</div>
+                    </div>
+                </div>
+
+                <!-- All Reviews -->
+                <div class="card">
+                    <h3>All Reviews</h3>
+                    <div id="reviewsDisplay" class="loading">Loading reviews...</div>
                 </div>
             </div>
         </div>
@@ -691,6 +730,7 @@
             document.getElementById('dashboardSection').style.display = 'none';
             document.getElementById('usersSection').style.display = 'none';
             document.getElementById('testsSection').style.display = 'none';
+            document.getElementById('reviewsSection').style.display = 'none';
             
             // Remove active class from all menu items
             document.querySelectorAll('.sidebar-menu a').forEach(a => a.classList.remove('active'));
@@ -708,12 +748,98 @@
                 document.getElementById('testsSection').style.display = 'block';
                 document.querySelectorAll('.sidebar-menu a')[2].classList.add('active');
                 loadTests();
+            } else if (section === 'reviews') {
+                document.getElementById('reviewsSection').style.display = 'block';
+                document.querySelectorAll('.sidebar-menu a')[3].classList.add('active');
+                loadReviews();
             }
             
             return false;
         }
 
-        // Load all users
+        // Load reviews
+        async function loadReviews() {
+            console.log('Loading reviews...');
+            
+            try {
+                // Load review stats
+                const statsResponse = await fetch(API_URL + '/reviews/stats', {
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (statsResponse.ok) {
+                    const stats = await statsResponse.json();
+                    document.getElementById('totalReviews').textContent = stats.total_reviews;
+                    document.getElementById('avgRating').textContent = stats.avg_rating;
+                    document.getElementById('likedCount').textContent = stats.liked_count;
+                    document.getElementById('problemCount').textContent = stats.problem_reports;
+                }
+
+                // Load all reviews
+                const allResponse = await fetch(API_URL + '/reviews/all', {
+                    headers: {
+                        'Authorization': 'Bearer ' + authToken,
+                        'Content-Type': 'application/json'
+                    }
+                });
+
+                if (!allResponse.ok) {
+                    throw new Error('Failed to load reviews');
+                }
+
+                const data = await allResponse.json();
+                const reviewsDisplay = document.getElementById('reviewsDisplay');
+
+                if (data.reviews.length === 0) {
+                    reviewsDisplay.innerHTML = '<p style="text-align: center; padding: 20px; color: #999;">No reviews yet</p>';
+                    return;
+                }
+
+                let html = `
+                    <table style="width: 100%; border-collapse: collapse;">
+                        <thead>
+                            <tr style="border-bottom: 2px solid #ddd; background: #f8f9ff;">
+                                <th style="padding: 12px; text-align: left;">User</th>
+                                <th style="padding: 12px; text-align: left;">Rating</th>
+                                <th style="padding: 12px; text-align: left;">Liked</th>
+                                <th style="padding: 12px; text-align: left;">Feedback</th>
+                                <th style="padding: 12px; text-align: left;">Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                `;
+
+                data.reviews.forEach(review => {
+                    const date = new Date(review.created_at).toLocaleDateString();
+                    const likedIcon = review.liked_paper === true ? '👍' : (review.liked_paper === false ? '👎' : '⚪');
+                    const rating = review.rating ? '⭐'.repeat(review.rating) : 'N/A';
+                    
+                    html += `
+                        <tr style="border-bottom: 1px solid #eee;">
+                            <td style="padding: 12px;"><strong>${review.name || 'Anonymous'}</strong><br><small style="color: #999;">${review.email || 'N/A'}</small></td>
+                            <td style="padding: 12px;">${rating}</td>
+                            <td style="padding: 12px;">${likedIcon}</td>
+                            <td style="padding: 12px;"><small>${review.feedback ? review.feedback.substring(0, 50) + '...' : 'N/A'}</small></td>
+                            <td style="padding: 12px;"><small>${date}</small></td>
+                        </tr>
+                    `;
+                });
+
+                html += `
+                        </tbody>
+                    </table>
+                `;
+
+                reviewsDisplay.innerHTML = html;
+
+            } catch (error) {
+                console.error('Error loading reviews:', error);
+                document.getElementById('reviewsDisplay').innerHTML = '<p style="color: red;">Error loading reviews: ' + error.message + '</p>';
+            }
+        }
         async function loadAllUsers() {
             console.log('Loading all users...');
             const container = document.getElementById('allUsersList');
