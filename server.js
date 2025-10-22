@@ -62,6 +62,8 @@ const allowedOrigins = [
   'http://localhost:5000',
   'http://localhost:3000',
   'https://web-app-kljr.onrender.com',
+  'https://www.aptitudepro.in',
+  'https://aptitudepro.in',
   'https://web-app-pi-seven-32.vercel.app',
   'https://web-rl21xegox-chandrabhanu35s-projects.vercel.app'
 ];
@@ -119,6 +121,11 @@ app.use('/api/auth', authRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
+
+// Debug endpoint for testing
+app.get('/api/test', (req, res) => {
+  res.json({ message: 'API is working', timestamp: new Date().toISOString() });
+});
 
 // Add security headers
 app.use((req, res, next) => {
