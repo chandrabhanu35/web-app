@@ -182,37 +182,72 @@ router.post('/admin/login', async (req, res) => {
   try {
     const { email, password } = req.body;
 
+    console.log('🔐 Admin login attempt for:', email);
+
     // ✅ FIXED: Input validation
     let validation = validateInput.email(email);
-    if (!validation.valid) return res.status(400).json({ error: validation.error });
+    if (!validation.valid) {
+      console.log('❌ Email validation failed:', email);
+      return res.status(400).json({ error: validation.error });
+    }
 
     validation = validateInput.password(password);
-    if (!validation.valid) return res.status(400).json({ error: validation.error });
+    if (!validation.valid) {
+      console.log('❌ Password validation failed');
+      return res.status(400).json({ error: validation.error });
+    }
 
     // First check if user exists
-    const userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    let userResult;
+    try {
+      userResult = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    } catch (dbError) {
+      console.error('❌ Database query failed:', dbError.message);
+      return res.status(500).json({ error: 'Database connection error' });
+    }
 
     if (userResult.rows.length === 0) {
+      console.log('❌ Admin user not found:', email);
       return res.status(401).json({ error: 'Invalid admin credentials' });
     }
 
     const user = userResult.rows[0];
+    console.log('✓ User found:', email);
 
     // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    let isPasswordValid;
+    try {
+      isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    } catch (bcryptError) {
+      console.error('❌ Password comparison failed:', bcryptError.message);
+      return res.status(500).json({ error: 'Authentication processing error' });
+    }
+
     if (!isPasswordValid) {
+      console.log('❌ Invalid password for admin:', email);
       return res.status(401).json({ error: 'Invalid admin credentials' });
     }
 
-    // Check if user is an admin
-    const adminCheck = await pool.query(
-      'SELECT role FROM admin_users WHERE user_id = $1 AND role = $2',
-      [user.id, 'admin']
-    );
+    console.log('✓ Password verified');
 
-    if (adminCheck.rows.length === 0) {
+    // Check if user is an admin
+    let adminCheck;
+    try {
+      adminCheck = await pool.query(
+        'SELECT role FROM admin_users WHERE user_id = $1 AND role = $2',
+        [user.id, 'admin']
+      );
+    } catch (adminCheckError) {
+      console.error('❌ Admin check query failed:', adminCheckError.message);
+      // Don't fail - try to continue
+    }
+
+    if (!adminCheck || adminCheck.rows.length === 0) {
+      console.log('❌ Admin privileges not found for user:', email);
       return res.status(403).json({ error: 'Access denied. Admin privileges required.' });
     }
+
+    console.log('✓ Admin privileges confirmed');
 
     // Create token with admin flag
     const token = jwt.sign(
@@ -230,10 +265,10 @@ router.post('/admin/login', async (req, res) => {
         [user.id, tokenHash, req.get('user-agent') || '', req.ip || '']
       );
     } catch (sessionError) {
-      // If sessions table doesn't exist yet, just log and continue
-      console.warn('⚠️ Warning: Could not create session record:', sessionError.message);
+      console.warn('⚠️ Session record failed:', sessionError.message);
     }
 
+    console.log('✅ Admin login successful for:', email);
     res.json({
       message: 'Admin login successful',
       token,
@@ -246,8 +281,15 @@ router.post('/admin/login', async (req, res) => {
     });
 
   } catch (error) {
-    console.error('Admin login error:', error);
-    res.status(500).json({ error: 'Server error during admin login' });
+    console.error('❌ Admin login error:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    res.status(500).json({ 
+      error: 'Server error during admin login',
+      details: process.env.NODE_ENV !== 'production' ? error.message : undefined
+    });
   }
 });
 
