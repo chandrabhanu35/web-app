@@ -39,6 +39,38 @@ export const runMigrations = async () => {
       console.log('✅ Added is_suspicious column');
     }
 
+    // Check if reviews table exists
+    const reviewsTableCheck = await pool.query(`
+      SELECT EXISTS (
+        SELECT 1 FROM information_schema.tables 
+        WHERE table_name = 'reviews'
+      )
+    `);
+
+    if (!reviewsTableCheck.rows[0].exists) {
+      console.log('📝 Creating reviews table...');
+      await pool.query(`
+        CREATE TABLE reviews (
+          id SERIAL PRIMARY KEY,
+          user_id INTEGER,
+          rating INTEGER CHECK (rating >= 1 AND rating <= 5),
+          liked_paper BOOLEAN,
+          questions_faced TEXT[],
+          problems_faced TEXT,
+          feedback TEXT,
+          chatbot_responses JSONB,
+          created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+          FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        );
+        
+        CREATE INDEX idx_reviews_user_id ON reviews(user_id);
+        CREATE INDEX idx_reviews_created_at ON reviews(created_at DESC);
+        CREATE INDEX idx_reviews_rating ON reviews(rating);
+      `);
+      console.log('✅ Created reviews table');
+    }
+
     console.log('✅ All migrations completed successfully');
     return { success: true };
   } catch (error) {

@@ -220,5 +220,35 @@
             document.body.innerHTML += '<p style="color:red; font-size:20px;">⚠️ JavaScript failed to load. Please refresh the page.</p>';
         }
     </script>
+
+    <!-- Chatbot Widget -->
+    <div id="chatbotWidget" class="chatbot-widget">
+        <div class="chatbot-header">
+            <span>💬 AptitudePro Feedback</span>
+            <button class="chatbot-close" onclick="closeChatbot()">✕</button>
+        </div>
+        
+        <div class="chatbot-body">
+            <div id="chatMessages" class="chat-messages">
+                <div class="chat-message bot-message">
+                    <p>👋 Hi! We'd love to hear your feedback about this test!</p>
+                    <p>Just answer a few quick questions to help us improve.</p>
+                </div>
+            </div>
+        </div>
+        
+        <div class="chatbot-footer">
+            <div id="chatInput" class="chat-input">
+                <!-- Questions will be added here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Chatbot Toggle Button -->
+    <button id="chatbotToggle" class="chatbot-toggle" onclick="toggleChatbot()" title="Feedback">
+        💬
+    </button>
+
+    <script src="/chatbot.js"></script>
 </body>
 </html>

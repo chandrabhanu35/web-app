@@ -11,6 +11,7 @@ import authRoutes from './routes/auth.js';
 import quizRoutes from './routes/quiz.js';
 import userRoutes from './routes/user.js';
 import adminRoutes from './routes/admin.js';
+import reviewRoutes from './routes/reviews.js';
 
 // Import middleware
 import { updateSessionActivity } from './middleware/auth.js';
@@ -121,6 +122,7 @@ app.use('/api/auth', authRoutes);
 app.use('/api/quiz', quizRoutes);
 app.use('/api/user', userRoutes);
 app.use('/api/admin', adminRoutes);
+app.use('/api/reviews', reviewRoutes);
 
 // Debug endpoint for testing
 app.get('/api/test', (req, res) => {
