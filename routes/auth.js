@@ -18,42 +18,89 @@ router.post('/signup', async (req, res) => {
   try {
     const { name, email, mobile, password, confirmPassword } = req.body;
 
+    console.log('📝 Signup attempt for email:', email);
+
     // ✅ FIXED: Input validation
     let validation = validateInput.name(name);
-    if (!validation.valid) return res.status(400).json({ error: validation.error });
+    if (!validation.valid) {
+      console.log('❌ Name validation failed:', name);
+      return res.status(400).json({ error: validation.error });
+    }
 
     validation = validateInput.email(email);
-    if (!validation.valid) return res.status(400).json({ error: validation.error });
+    if (!validation.valid) {
+      console.log('❌ Email validation failed:', email);
+      return res.status(400).json({ error: validation.error });
+    }
 
     validation = validateInput.mobile(mobile);
-    if (!validation.valid) return res.status(400).json({ error: validation.error });
+    if (!validation.valid) {
+      console.log('❌ Mobile validation failed:', mobile);
+      return res.status(400).json({ error: validation.error });
+    }
 
     validation = validateInput.password(password);
-    if (!validation.valid) return res.status(400).json({ error: validation.error });
+    if (!validation.valid) {
+      console.log('❌ Password validation failed');
+      return res.status(400).json({ error: validation.error });
+    }
 
     if (password !== confirmPassword) {
+      console.log('❌ Passwords do not match');
       return res.status(400).json({ error: 'Passwords do not match' });
     }
 
     // Check if user exists
-    const existingUser = await pool.query(
-      'SELECT id FROM users WHERE email = $1 OR mobile = $2',
-      [email, mobile]
-    );
+    let existingUser;
+    try {
+      existingUser = await pool.query(
+        'SELECT id FROM users WHERE email = $1 OR mobile = $2',
+        [email, mobile]
+      );
+    } catch (dbError) {
+      console.error('❌ Database query failed (checking existing user):', dbError.message);
+      return res.status(500).json({ error: 'Database connection error' });
+    }
+
     if (existingUser.rows.length > 0) {
+      console.log('❌ User already exists:', email);
       return res.status(400).json({ error: 'Email or mobile already registered' });
     }
 
+    console.log('✓ Validation passed, hashing password...');
+
     // Hash password
-    const hashedPassword = await bcrypt.hash(password, 10);
+    let hashedPassword;
+    try {
+      hashedPassword = await bcrypt.hash(password, 10);
+    } catch (bcryptError) {
+      console.error('❌ Password hashing failed:', bcryptError.message);
+      return res.status(500).json({ error: 'Authentication processing error' });
+    }
+
+    console.log('✓ Creating user in database...');
 
     // Create user
-    const result = await pool.query(
-      'INSERT INTO users (name, email, mobile, password_hash) VALUES ($1, $2, $3, $4) RETURNING id, name, email',
-      [name, email, mobile, hashedPassword]
-    );
+    let result;
+    try {
+      result = await pool.query(
+        'INSERT INTO users (name, email, mobile, password_hash) VALUES ($1, $2, $3, $4) RETURNING id, name, email',
+        [name, email, mobile, hashedPassword]
+      );
+    } catch (createUserError) {
+      console.error('❌ User creation failed:', {
+        message: createUserError.message,
+        code: createUserError.code,
+        detail: createUserError.detail
+      });
+      return res.status(500).json({ 
+        error: 'Failed to create user',
+        details: process.env.NODE_ENV !== 'production' ? createUserError.message : undefined
+      });
+    }
 
     const user = result.rows[0];
+    console.log('✓ User created with ID:', user.id);
 
     // Create token
     const token = jwt.sign({ userId: user.id, email: user.email }, JWT_SECRET, { expiresIn: '30d' });
@@ -66,19 +113,28 @@ router.post('/signup', async (req, res) => {
          VALUES ($1, $2, $3, $4, CURRENT_TIMESTAMP)`,
         [user.id, tokenHash, req.get('user-agent') || '', req.ip || '']
       );
+      console.log('✓ Session created');
     } catch (sessionError) {
       // If sessions table doesn't exist yet, just log and continue
-      console.warn('⚠️ Warning: Could not create session record:', sessionError.message);
+      console.warn('⚠️ Session creation warning:', sessionError.message);
     }
 
+    console.log('✅ Signup successful for:', email);
     res.status(201).json({
       message: 'Account created successfully',
       token,
       user: { id: user.id, name: user.name, email: user.email }
     });
   } catch (error) {
-    console.error('Signup error:', error);
-    res.status(500).json({ error: 'Server error during signup' });
+    console.error('❌ Signup error:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    res.status(500).json({ 
+      error: 'Server error during signup',
+      details: process.env.NODE_ENV !== 'production' ? error.message : undefined
+    });
   }
 });
 
