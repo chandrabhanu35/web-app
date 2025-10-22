@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="200" height="200" viewBox="0 0 200 200" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Hexagon Background -->
+  <defs>
+    <linearGradient id="hexGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#764ba2;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <!-- Hexagon -->
+  <polygon points="100,20 170,55 170,145 100,180 30,145 30,55" fill="url(#hexGradient)" />
+  
+  <!-- Lightning Bolt -->
+  <path d="M 100 60 L 85 100 L 110 100 L 75 155 L 115 100 L 90 100 Z" fill="white" />
+</svg>
