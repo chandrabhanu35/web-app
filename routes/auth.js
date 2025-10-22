@@ -106,7 +106,13 @@ router.post('/login', async (req, res) => {
 
     console.log('Attempting login for email:', email); // Debug log
 
-    const result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    let result;
+    try {
+      result = await pool.query('SELECT * FROM users WHERE email = $1', [email]);
+    } catch (dbError) {
+      console.error('Database query failed:', dbError.message);
+      return res.status(500).json({ error: 'Database connection error' });
+    }
 
     if (result.rows.length === 0) {
       console.log('No user found for email:', email); // Debug log
@@ -114,10 +120,19 @@ router.post('/login', async (req, res) => {
     }
 
     const user = result.rows[0];
+    console.log('User found, verifying password for:', email);
 
     // Verify password
-    const isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    let isPasswordValid;
+    try {
+      isPasswordValid = await bcrypt.compare(password, user.password_hash);
+    } catch (bcryptError) {
+      console.error('Password comparison failed:', bcryptError.message);
+      return res.status(500).json({ error: 'Authentication processing error' });
+    }
+
     if (!isPasswordValid) {
+      console.log('Invalid password for:', email);
       return res.status(401).json({ error: 'Invalid credentials' });
     }
 
@@ -137,6 +152,7 @@ router.post('/login', async (req, res) => {
       console.warn('⚠️ Warning: Could not create session record:', sessionError.message);
     }
 
+    console.log('✅ Login successful for:', email);
     res.json({
       message: 'Login successful',
       token,
@@ -149,8 +165,15 @@ router.post('/login', async (req, res) => {
       }
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Server error during login' });
+    console.error('❌ Login error:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code
+    });
+    res.status(500).json({ 
+      error: 'Server error during login',
+      details: process.env.NODE_ENV !== 'production' ? error.message : undefined
+    });
   }
 });
 

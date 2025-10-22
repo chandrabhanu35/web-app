@@ -20,6 +20,7 @@ import { initializeDatabase } from './db/schema.js';
 import setupDefaultAdmin from './db/setupAdmin.js';
 import { autoSeedQuestions } from './db/autoSeed.js';
 import { runMigrations } from './db/migrations.js';
+import seedTestUser from './db/seedTestUser.js';
 
 dotenv.config();
 
@@ -188,6 +189,10 @@ async function startServer() {
     
     await setupDefaultAdmin();
     console.log('✅ Admin setup complete');
+    
+    // Seed test user for development
+    await seedTestUser();
+    console.log('✅ Test user ready');
     
     // Auto-seed questions if they don't exist
     await autoSeedQuestions();
