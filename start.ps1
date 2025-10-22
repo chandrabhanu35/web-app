@@ -1,8 +1,8 @@
-# AptitudeHub - Quick Start PowerShell Script
+# AptitudePro - Quick Start PowerShell Script
 
 Write-Host "`n" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan
-Write-Host "  AptitudeHub - Quick Start" -ForegroundColor Cyan
+Write-Host "  AptitudePro - Quick Start" -ForegroundColor Cyan
 Write-Host "=====================================" -ForegroundColor Cyan
 Write-Host "`n"
 

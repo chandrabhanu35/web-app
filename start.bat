@@ -1,9 +1,9 @@
 @echo off
-REM Quick Start Script for AptitudeHub
+REM Quick Start Script for AptitudePro
 
 echo.
 echo ====================================
-echo   AptitudeHub - Quick Start
+echo   AptitudePro - Quick Start
 echo ====================================
 echo.
 

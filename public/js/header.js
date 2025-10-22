@@ -5,7 +5,7 @@ if (header) {
         <div class="header-content">
             <a href="/" class="logo">
                 <span>🎯</span>
-                <span>AptitudeHub</span>
+                <span>AptitudePro</span>
             </a>
             <nav class="nav-links">
                 <a href="/" class="nav-link">Home</a>
